@@ -88,8 +88,9 @@
 #define WSA_LAST_ERROR(x) ((long)(x))
 #endif
 
-#define SERVER_CERT_FILE "certs/cert.pem"
-#define SERVER_KEY_FILE "certs/key.pem"
+static const char* default_server_cert_file = "certs/server-ecc.pem";
+static const char* default_server_key_file = "certs/ecc-key.pem";
+static const char* default_trust_cert_file = "certs/ca-ecc-cert.pem";
 
 #endif
 
