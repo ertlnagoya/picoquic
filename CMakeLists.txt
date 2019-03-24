@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 11)
 
 # FIND_PACKAGE(PkgConfig REQUIRED)
 
-set(CMAKE_C_FLAGS "-std=c99 -Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS "-std=c99 -Wall -O0 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 
 if(DISABLE_DEBUG_PRINTF)
     set(CMAKE_C_FLAGS "-DDISABLE_DEBUG_PRINTF ${CMAKE_C_FLAGS}")
@@ -72,7 +72,6 @@ set(WOLFSSL_INCLUDE_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfssl
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfcrypt
-    ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/build
 )
 include_directories("${WOLFSSL_INCLUDE_DIR}")
 
