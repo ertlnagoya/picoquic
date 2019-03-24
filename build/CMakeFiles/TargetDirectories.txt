@@ -1,6 +1,0 @@
-/Users/komatsu/src/quic-wolfssl/picoquic/build/CMakeFiles/rebuild_cache.dir
-/Users/komatsu/src/quic-wolfssl/picoquic/build/CMakeFiles/clangformat.dir
-/Users/komatsu/src/quic-wolfssl/picoquic/build/CMakeFiles/picoquicdemo.dir
-/Users/komatsu/src/quic-wolfssl/picoquic/build/CMakeFiles/edit_cache.dir
-/Users/komatsu/src/quic-wolfssl/picoquic/build/CMakeFiles/picoquic_ct.dir
-/Users/komatsu/src/quic-wolfssl/picoquic/build/CMakeFiles/picoquic-core.dir
