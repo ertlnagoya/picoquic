@@ -13,6 +13,11 @@ if(DISABLE_DEBUG_PRINTF)
     set(CMAKE_C_FLAGS "-DDISABLE_DEBUG_PRINTF ${CMAKE_C_FLAGS}")
 endif()
 
+set(LWIP_INCLUDE_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/src/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/src/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/test/linux/
+)
 set(PICOQUIC_LIBRARY_FILES
     picoquic/cubic.c
 	picoquic/democlient.c
@@ -73,7 +78,7 @@ set(WOLFSSL_INCLUDE_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfssl
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfcrypt
 )
-include_directories("${WOLFSSL_INCLUDE_DIR}")
+include_directories(${WOLFSSL_INCLUDE_DIR} ${LWIP_INCLUDE_DIR})
 
 include_directories(picoquic picoquictest
     ${PTLS_INCLUDE_DIRS})
@@ -81,9 +86,17 @@ include_directories(picoquic picoquictest
 add_library(picoquic-core
     ${PICOQUIC_LIBRARY_FILES}
 )
+find_library(LWIP lwip PATH ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/Debug)
+message(STATUS "Found lwip at : ${LWIP} " )
+
+find_library(PTHREAD_LIBRARY pthread)
+message(STATUS "Found lwip at : ${PTHREAD_LIBRARY} " )
+
+find_library(PCAP_LIBRARY pcap)
+message(STATUS "Found lwip at : ${PCAP_LIBRARY} " )
 
 find_library(WOLFSSL_LIBRARY NSMES libwolf.a PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/build)
-MESSAGE(STATUS "Found wolfssl at : ${WOLFSSL_LIBRARY} " )
+message(STATUS "Found wolfssl at : ${WOLFSSL_LIBRARY} " )
 
 add_executable(picoquicdemo picoquicfirst/picoquicdemo.c
                             picoquicfirst/getopt.c )
@@ -92,6 +105,9 @@ target_link_libraries(picoquicdemo picoquic-core
     ${WOLFSSL_LIBRARY}
     m
     ${CMAKE_DL_LIBS}
+    ${LWIP}
+    ${PTHREAD_LIBRARY}
+    ${PCAP_LIBRARY}
 )
 
 add_executable(picoquic_ct picoquic_t/picoquic_t.c
@@ -101,6 +117,9 @@ target_link_libraries(picoquic_ct picoquic-core
     ${WOLFSSL_LIBRARY}
     m
     ${CMAKE_DL_LIBS}
+    ${LWIP}
+    ${PTHREAD_LIBRARY}
+    ${PCAP_LIBRARY}
 )
 
 set(TEST_EXES picoquic_ct)
