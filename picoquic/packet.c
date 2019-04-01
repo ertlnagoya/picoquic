@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#endif
 
 /*
  * The new packet header parsing is version dependent

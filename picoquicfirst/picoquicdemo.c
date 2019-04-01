@@ -69,11 +69,18 @@
 #ifndef __USE_POSIX
 #define __USE_POSIX
 #endif
-#include <arpa/inet.h>
 #include <errno.h>
+
+#ifndef WOLFSSL_LWIP
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/select.h>
+#else
+#include "lwip/netdb.h"
+#include "lwip/tcpip.h"
+#include "lwip.h"
+#endif
 
 #ifndef SOCKET_TYPE
 #define SOCKET_TYPE int

@@ -27,6 +27,9 @@
 #include <WS2tcpip.h>
 #include <Ws2def.h>
 #include <winsock2.h>
+#endif
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
 #else
 #include <arpa/inet.h>
 #include <netinet/in.h>

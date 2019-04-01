@@ -27,7 +27,9 @@
 #ifndef _WINDOWS
 #include <sys/time.h>
 #endif
-
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#endif
 
 /*
 * Structures used in the hash table of connections
