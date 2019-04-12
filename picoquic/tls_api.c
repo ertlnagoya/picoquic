@@ -384,8 +384,8 @@ int picoquic_client_hello_call_back(ptls_on_client_hello_t* on_hello_cb_ctx,
     }
 
     /* If no common ALPN found, pick the first choice of the client. 
-	 * This could be problematic, but right now alpn use in quic is in flux.
-	 */
+     * This could be problematic, but right now alpn use in quic is in flux.
+     */
 
     if (alpn_found == 0) {
         for (size_t i = 0; i < params->negotiated_protocols.count; i++) {

@@ -101,7 +101,7 @@ static const char* default_trust_cert_file = "../certs/ca-ecc-cert.pem";
 
 #endif
 
-static const int default_server_port = 4443;
+static const int default_server_port = 12345;
 static const char* default_server_name = "::";
 static const char* ticket_store_filename = "demo_ticket_store.bin";
 static const char* token_store_filename = "demo_token_store.bin";
@@ -375,12 +375,12 @@ static const picoquic_demo_stream_desc_t test_scenario[] = {
     { 0, PICOQUIC_DEMO_STREAM_ID_INITIAL, "123.txt", "123.txt", 0 }
 #else
     { 0, PICOQUIC_DEMO_STREAM_ID_INITIAL, "index.html", "index.html", 0 },
-    { 4, 0, "test.html", "test.html", 0 },
+    /*{ 4, 0, "test.html", "test.html", 0 },
     { 8, 0, "1234567", "doc-1234567.html", 0 },
     { 12, 0, "main.jpg", "main.jpg", 1 },
     { 16, 0, "war-and-peace.txt", "war-and-peace.txt", 0 },
     { 20, 0, "en/latest/", "slash_en_slash_latest.html", 0 },
-    { 24, 0, "/file-123K", "file-123k.txt", 0 }
+    { 24, 0, "/file-123K", "file-123k.txt", 0 }*/
 #endif
 #endif
 };
@@ -1183,6 +1183,21 @@ int main(int argc, char** argv)
         usage();
     }
 
+    /* Initialize */
+    printf("init lwip\n");
+    if(net_init(NULL) != ERR_OK){
+        printf("Failed to initialize netif!\n");
+        net_quit();
+        return 0;
+    }
+    pthread_t thread;
+    thread = start_netif();
+    if (thread < 0){
+        printf("Failed to start netif!\n");
+        net_quit();
+        return 0;
+    }
+
 #ifdef _WINDOWS
     // Init WSA.
     if (ret == 0) {
@@ -1252,5 +1267,11 @@ int main(int argc, char** argv)
 
     if (cnx_id_cbdata != NULL) {
         picoquic_connection_id_callback_free_ctx(cnx_id_cbdata);
+    }
+    if(thread >= 0){
+        printf("free thread\n");
+        pthread_join(thread, NULL);        
+        printf("end netif!\n");
+        net_quit();
     }
 }

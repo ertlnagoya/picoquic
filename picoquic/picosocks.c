@@ -34,7 +34,7 @@ static int bind_to_port(SOCKET_TYPE fd, int af, int port)
 
     memset(&sa, 0, sizeof(sa));
 
-    if (af == AF_INET) {
+    if (af == AF_INET) {//ipv4
         struct sockaddr_in* s4 = (struct sockaddr_in*)&sa;
 #ifdef _WINDOWS
         s4->sin_family = (ADDRESS_FAMILY)af;
@@ -72,6 +72,7 @@ static int picoquic_socket_set_pkt_info(SOCKET_TYPE sd, int af)
         ret = setsockopt(sd, IPPROTO_IP, IP_PKTINFO, (char*)&option_value, sizeof(int));
     }
 #else
+#ifdef QUICIPV6
     if (af == AF_INET6) {
         int val = 1;
         ret = setsockopt(sd, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -82,6 +83,8 @@ static int picoquic_socket_set_pkt_info(SOCKET_TYPE sd, int af)
         }
     }
     else {
+#endif 
+        {
         int val = 1;
 #ifdef IP_PKTINFO
         ret = setsockopt(sd, IPPROTO_IP, IP_PKTINFO, (char*)&val, sizeof(int));
@@ -541,6 +544,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
                         *received_ecn = *((unsigned char *)CMSG_DATA(cmsg));
                     }
                 }
+#ifdef QUICIPV6
             }
             else if (cmsg->cmsg_level == IPPROTO_IPV6) {
                 if (cmsg->cmsg_type == IPV6_PKTINFO) {
@@ -562,6 +566,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
                         *received_ecn = *((unsigned char *)CMSG_DATA(cmsg));
                     }
                 }
+#endif
             }
         }
     }
@@ -736,6 +741,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
             pktinfo->s_addr = ((struct sockaddr_in*)addr_from)->sin_addr.s_addr;
             control_length += CMSG_SPACE(sizeof(struct in_addr));
 #endif
+#ifdef QUICIPV6
         } else if (addr_from->sa_family == AF_INET6) {
             memset(cmsg, 0, CMSG_SPACE(sizeof(struct in6_pktinfo)));
             cmsg->cmsg_level = IPPROTO_IPV6;
@@ -746,6 +752,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
             pktinfo6->ipi6_ifindex = dest_if;
 
             control_length += CMSG_SPACE(sizeof(struct in6_pktinfo));
+#endif /*QUICIPV6*/
         } else {
             DBG_PRINTF("Unexpected address family: %d\n", addr_from->sa_family);
         }
@@ -812,7 +819,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
                 DBG_PRINTF("Cannot obtain second CMSG (control_length: %d)\n", control_length);
             }
             else {
-#endif
+#endif /* CMSG_ALIGN */
                 /* On BSD systems, just use IP_DONTFRAG */
                 int val = 1;
                 cmsg_2->cmsg_level = IPPROTO_IP;
@@ -822,10 +829,10 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
                 control_length += CMSG_SPACE(sizeof(int));
             }
         }
-#endif
+#endif /* IP_DONTFRAG */
 
 
-#endif
+#endif /* if0 */
 
     }
 
