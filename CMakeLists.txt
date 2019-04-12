@@ -7,16 +7,16 @@ set(CMAKE_C_STANDARD 11)
 
 # FIND_PACKAGE(PkgConfig REQUIRED)
 
-set(CMAKE_C_FLAGS "-std=c99 -Wall -O0 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS "-std=c99 -Wall -O2 -g ${CC_WARNING_FLAGS} ${CMAKE_C_FLAGS}")
 
 if(DISABLE_DEBUG_PRINTF)
     set(CMAKE_C_FLAGS "-DDISABLE_DEBUG_PRINTF ${CMAKE_C_FLAGS}")
 endif()
 
 set(LWIP_INCLUDE_DIR
-    ../lwip-linux/lwip-2.1.0/src/include/
-    ../lwip-linux/lwip-2.1.0/src/
-    ../lwip-linux/lwip-2.1.0/test/linux/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/src/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/src/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/test/linux/
 )
 
 include_directories(${LWIP_INCLUDE_DIR})
@@ -75,7 +75,7 @@ find_package(PTLS REQUIRED)
 message(STATUS "picotls/include: ${PTLS_INCLUDE_DIRS}" )
 message(STATUS "picotls libraries: ${PTLS_LIBRARIES}" )
 
-find_library(LWIP lwip PATH ../lwip-linux/Debug)
+find_library(LWIP lwip PATH ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/Debug)
 message(STATUS "Found lwip at : ${LWIP} " )
 
 find_library(PTHREAD_LIBRARY pthread)
