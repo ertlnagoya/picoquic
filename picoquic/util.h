@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "picoquic.h"
+#include "lwip/sockets.h"
 
 #ifdef WIN32
 #define PRIst "Iu"

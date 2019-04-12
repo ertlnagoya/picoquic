@@ -63,9 +63,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h>
+//#include <sys/socket.h>
+//#include <sys/time.h>
+//#include <sys/types.h>
 #include <unistd.h>
 
 #ifndef __USE_XOPEN2K
@@ -81,11 +81,16 @@
 #define __APPLE_USE_RFC_3542 /* IPV6_PKTINFO */
 #endif
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/select.h>
+//#include <arpa/inet.h>
+//#include <errno.h>
+//#include <netdb.h>
+//#include <netinet/in.h>
+//#include <sys/select.h>
+
+#include "lwip/sockets.h"
+#include "lwip/errno.h"
+#include "lwip/netdb.h"
+#include "lwip/def.h"
 
 #ifndef SOCKET_TYPE
 #define SOCKET_TYPE int
@@ -100,13 +105,13 @@
 #define WSA_LAST_ERROR(x) ((long)(x))
 #endif
 #ifndef IPV6_RECVPKTINFO
-#define IPV6_RECVPKTINFO IPV6_PKTINFO /* Cygwin */
+//#define IPV6_RECVPKTINFO IPV6_PKTINFO /* Cygwin */
 #endif
 #endif
 
 #include "picoquic_internal.h"
 
-#define PICOQUIC_NB_SERVER_SOCKETS 2
+#define PICOQUIC_NB_SERVER_SOCKETS 1
 
 typedef struct st_picoquic_server_sockets_t {
     SOCKET_TYPE s_socket[PICOQUIC_NB_SERVER_SOCKETS];

@@ -24,6 +24,7 @@
 #include "tls_api.h"
 #include <stdlib.h>
 #include <string.h>
+#include "lwip/sockets.h"
 
 /*
  * Sending logic.

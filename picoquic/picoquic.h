@@ -23,17 +23,10 @@
 #define PICOQUIC_H
 
 #include <stdint.h>
-#ifdef _WINDOWS
-#include <WS2tcpip.h>
-#include <Ws2def.h>
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
+#include "lwip/sockets.h"
 #include <unistd.h>
-#endif
+
+
 
 #ifdef __cplusplus
 extern "C" {

@@ -24,6 +24,7 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include "lwip/sockets.h"
 #include "fnv1a.h"
 #include "picoquic_internal.h"
 #include "tls_api.h"

@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "lwip/sockets.h"
 
 /*
  * The new packet header parsing is version dependent

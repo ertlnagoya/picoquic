@@ -20,9 +20,7 @@
 */
 
 #include <stdint.h>
-#ifndef WIN32
-#include <sys/types.h>
-#endif
+#include "lwip/sockets.h"
 
 void picoformat_16(uint8_t* bytes, uint16_t n16)
 {
