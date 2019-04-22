@@ -24,6 +24,9 @@
 #include "tls_api.h"
 #include <stdlib.h>
 #include <string.h>
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#endif
 
 /*
  * Sending logic.

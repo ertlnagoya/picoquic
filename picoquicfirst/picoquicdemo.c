@@ -69,11 +69,18 @@
 #ifndef __USE_POSIX
 #define __USE_POSIX
 #endif
-#include <arpa/inet.h>
 #include <errno.h>
+
+#ifndef WOLFSSL_LWIP
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/select.h>
+#else
+#include "lwip/netdb.h"
+#include "lwip/tcpip.h"
+#include "lwip.h"
+#endif
 
 #ifndef SOCKET_TYPE
 #define SOCKET_TYPE int
@@ -88,8 +95,9 @@
 #define WSA_LAST_ERROR(x) ((long)(x))
 #endif
 
-#define SERVER_CERT_FILE "certs/cert.pem"
-#define SERVER_KEY_FILE "certs/key.pem"
+#define SERVER_CERT_FILE "../certs/server-ecc.pem"
+#define SERVER_KEY_FILE "../certs/ecc-key.pem"
+static const char* default_trust_cert_file = "../certs/ca-ecc-cert.pem";
 
 #endif
 
@@ -988,7 +996,7 @@ void usage()
     fprintf(stderr, "  -a alpn               alpn (default function of version)\n");
     fprintf(stderr, "  -r                    Do Reset Request\n");
     fprintf(stderr, "  -s <64b 64b>          Reset seed\n");
-    fprintf(stderr, "  -t file               root trust file\n");
+    fprintf(stderr, "  -t file               root trust file (default: %s)\n", default_trust_cert_file);
     fprintf(stderr, "  -u nb                 trigger key update after receiving <nb> packets on client\n");
     fprintf(stderr, "  -v version            Version proposed by client, e.g. -v ff000012\n");
     fprintf(stderr, "  -z                    Set TLS zero share behavior on client, to force HRR.\n");
@@ -1022,7 +1030,7 @@ int main(int argc, char** argv)
     const char * sni = NULL;
     const char * alpn = NULL;
     int server_port = default_server_port;
-    const char* root_trust_file = NULL;
+    const char* root_trust_file = default_trust_cert_file;
     uint32_t proposed_version = 0;
     int is_client = 0;
     int just_once = 0;

@@ -13,6 +13,11 @@ if(DISABLE_DEBUG_PRINTF)
     set(CMAKE_C_FLAGS "-DDISABLE_DEBUG_PRINTF ${CMAKE_C_FLAGS}")
 endif()
 
+set(LWIP_INCLUDE_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/src/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/src/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/lwip-2.1.0/test/linux/
+)
 set(PICOQUIC_LIBRARY_FILES
     picoquic/cubic.c
 	picoquic/democlient.c
@@ -68,33 +73,53 @@ find_package(PTLS REQUIRED)
 message(STATUS "picotls/include: ${PTLS_INCLUDE_DIRS}" )
 message(STATUS "picotls libraries: ${PTLS_LIBRARIES}" )
 
-find_package(OpenSSL )
-message(STATUS "root: ${OPENSSL_ROOT_DIR}")
-message(STATUS "OpenSSL_VERSION: ${OPENSSL_VERSION}")
-message(STATUS "OpenSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
-message(STATUS "OpenSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
+set(WOLFSSL_INCLUDE_DIR 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfssl
+    ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfcrypt
+)
+include_directories(${WOLFSSL_INCLUDE_DIR} ${LWIP_INCLUDE_DIR})
 
 include_directories(picoquic picoquictest
-    ${PTLS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+    ${PTLS_INCLUDE_DIRS})
 
 add_library(picoquic-core
     ${PICOQUIC_LIBRARY_FILES}
 )
+find_library(LWIP lwip PATH ${CMAKE_CURRENT_SOURCE_DIR}/../lwip-linux/Debug)
+message(STATUS "Found lwip at : ${LWIP} " )
+
+find_library(PTHREAD_LIBRARY pthread)
+message(STATUS "Found lwip at : ${PTHREAD_LIBRARY} " )
+
+find_library(PCAP_LIBRARY pcap)
+message(STATUS "Found lwip at : ${PCAP_LIBRARY} " )
+
+find_library(WOLFSSL_LIBRARY NSMES libwolf.a PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/build)
+message(STATUS "Found wolfssl at : ${WOLFSSL_LIBRARY} " )
 
 add_executable(picoquicdemo picoquicfirst/picoquicdemo.c
                             picoquicfirst/getopt.c )
 target_link_libraries(picoquicdemo picoquic-core
     ${PTLS_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
+    ${WOLFSSL_LIBRARY}
+    m
     ${CMAKE_DL_LIBS}
+    ${LWIP}
+    ${PTHREAD_LIBRARY}
+    ${PCAP_LIBRARY}
 )
 
 add_executable(picoquic_ct picoquic_t/picoquic_t.c
  ${PICOQUIC_TEST_LIBRARY_FILES} )
 target_link_libraries(picoquic_ct picoquic-core
     ${PTLS_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
+    ${WOLFSSL_LIBRARY}
+    m
     ${CMAKE_DL_LIBS}
+    ${LWIP}
+    ${PTHREAD_LIBRARY}
+    ${PCAP_LIBRARY}
 )
 
 set(TEST_EXES picoquic_ct)

@@ -26,9 +26,9 @@
 #include <Windows.h>
 #include <WinSock2.h>
 #include <Ws2def.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
+#endif
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
 #endif
 #include "picoquic_internal.h"
 #include <stdarg.h>

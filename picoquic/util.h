@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "picoquic.h"
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#endif
 
 #ifdef WIN32
 #define PRIst "Iu"

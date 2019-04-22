@@ -21,6 +21,11 @@
 
 #include "picosocks.h"
 #include "util.h"
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#include "lwip/def.h"
+#include "lwip/netdb.h"
+#endif
 
 static int bind_to_port(SOCKET_TYPE fd, int af, int port)
 {
@@ -304,7 +309,11 @@ SOCKET_TYPE picoquic_open_client_socket(int af)
 int picoquic_open_server_sockets(picoquic_server_sockets_t* sockets, int port)
 {
     int ret = 0;
-    const int sock_af[] = { AF_INET6, AF_INET };
+#ifdef QUICIPV6
+    const int sock_af[] = { AF_INET, AF_INET6 };
+#else
+    const int sock_af[] = { AF_INET };
+#endif
 
     for (int i = 0; i < PICOQUIC_NB_SERVER_SOCKETS; i++) {
         if (ret == 0) {
@@ -919,7 +928,7 @@ int picoquic_send_through_server_sockets(
     const char* bytes, int length)
 {
     /* Both Linux and Windows use separate sockets for V4 and V6 */
-    int socket_index = (addr_dest->sa_family == AF_INET) ? 1 : 0;
+    int socket_index = (addr_dest->sa_family == AF_INET) ? 0 : 1;
 
     int sent = picoquic_sendmsg(sockets->s_socket[socket_index], addr_dest, dest_length,
         addr_from, from_length, from_if, bytes, length);

@@ -30,8 +30,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/pem.h>
 #include "picoquictest_internal.h"
+#include "wolfssl/openssl/ssl.h"
 
 char const * picoquic_test_solution_dir = NULL;
 
@@ -2922,10 +2922,10 @@ int set_certificate_and_key_test()
             BIO* bio_key = BIO_new_file(test_server_key_file, "rb");
             /* Load key and convert to DER */
             EVP_PKEY* key = PEM_read_bio_PrivateKey(bio_key, NULL, NULL, NULL);
-            int length = i2d_PrivateKey(key, NULL);
+            int length = 0;//i2d_PrivateKey(key, NULL);
             unsigned char* key_der = (unsigned char*)malloc(length);
             unsigned char* tmp = key_der;
-            i2d_PrivateKey(key, &tmp);
+            //i2d_PrivateKey(key, &tmp);
             EVP_PKEY_free(key);
             BIO_free(bio_key);
 

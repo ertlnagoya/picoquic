@@ -24,6 +24,9 @@
 */
 #include <stdio.h>
 #include <string.h>
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#endif
 #include "fnv1a.h"
 #include "picoquic_internal.h"
 #include "tls_api.h"

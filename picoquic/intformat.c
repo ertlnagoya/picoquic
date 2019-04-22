@@ -20,6 +20,9 @@
 */
 
 #include <stdint.h>
+#ifdef WOLFSSL_LWIP
+#include "lwip/sockets.h"
+#endif
 #ifndef WIN32
 #include <sys/types.h>
 #endif

@@ -22,6 +22,7 @@
 #ifdef _WINDOWS
 #include "wincompat.h"
 #endif
+#include <stdarg.h>
 #include <stddef.h>
 #include "picotls.h"
 #include "picoquic_internal.h"
@@ -29,12 +30,15 @@
 #include "picotls/minicrypto.h"
 #include "picotls/ffx.h"
 #include "tls_api.h"
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/engine.h>
-#include <openssl/conf.h>
+#include "wolfssl/ssl.h"
+#include "wolfssl/openssl/pem.h"
+#include "wolfssl/openssl/err.h"
+#include "wolfssl/openssl/engine.h"
+#define X509_FILETYPE_PEM 8
+
 #include <stdio.h>
 #include <string.h>
+#define OPENSSL_NO_ENGINE
 
 #define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
 
@@ -136,7 +140,7 @@ static int set_sign_certificate_from_key(EVP_PKEY* pkey, ptls_context_t* ctx)
     }
 
     if (pkey != NULL) {
-        EVP_PKEY_free(pkey);
+        //EVP_PKEY_free(pkey);
     }
 
     if (ret != 0 && signer != NULL) {
@@ -705,10 +709,6 @@ static int picoquic_update_traffic_key_callback(ptls_update_traffic_key_t * self
 
     int ret = picoquic_set_key_from_secret(cipher, is_enc, 0, &cnx->crypto_context[epoch], secret);
 
-    if (ret == 0 && cnx->client_mode && is_enc == 1 && epoch == 2) {
-        cnx->zero_rtt_data_accepted = tls_ctx->handshake_properties.client.early_data_accepted_by_peer;
-    }
-
     if (ret == 0 && epoch == 3) {
         memcpy((is_enc) ? tls_ctx->app_secret_enc : tls_ctx->app_secret_dec, secret, cipher->hash->digest_size);
     }
@@ -786,7 +786,7 @@ int picoquic_setup_initial_traffic_keys(picoquic_cnx_t* cnx)
 {
     int ret = 0;
     uint8_t master_secret[256]; /* secret_max */
-    ptls_cipher_suite_t cipher = { 0, &ptls_openssl_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_minicrypto_aes128gcm, &ptls_minicrypto_sha256 };
     ptls_iovec_t salt;
     uint8_t client_secret[256];
     uint8_t server_secret[256];
@@ -980,9 +980,9 @@ void picoquic_crypto_context_free(picoquic_crypto_context_t * ctx)
 
 /* Definition of supported key exchange algorithms */
 
-ptls_key_exchange_algorithm_t *picoquic_key_exchanges[] = { &ptls_openssl_secp256r1, &ptls_minicrypto_x25519, NULL };
+ptls_key_exchange_algorithm_t *picoquic_key_exchanges[] = { &ptls_minicrypto_secp256r1, &ptls_minicrypto_x25519, NULL };
 ptls_cipher_suite_t *picoquic_cipher_suites[] = { 
-    &ptls_openssl_aes256gcmsha384, &ptls_openssl_aes128gcmsha256,
+    &ptls_minicrypto_aes256gcmsha384, &ptls_minicrypto_aes128gcmsha256,
     &ptls_minicrypto_chacha20poly1305sha256, NULL };
 
 /*
@@ -1010,9 +1010,9 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
         ret = -1;
     } else {
         memset(ctx, 0, sizeof(ptls_context_t));
-        ctx->random_bytes = ptls_openssl_random_bytes;
-        ctx->key_exchanges = picoquic_key_exchanges; /* was:  ptls_openssl_key_exchanges; */
-        ctx->cipher_suites = picoquic_cipher_suites; /* was: ptls_openssl_cipher_suites; */
+        ctx->random_bytes = ptls_minicrypto_random_bytes;
+        ctx->key_exchanges = picoquic_key_exchanges; /* was:  ptls_minicrypto_key_exchanges; */
+        ctx->cipher_suites = picoquic_cipher_suites; /* was: ptls_minicrypto_cipher_suites; */
 
         ctx->send_change_cipher_spec = 0;
 
@@ -1547,7 +1547,7 @@ int picoquic_initialize_tls_stream(picoquic_cnx_t* cnx)
 
 void * picoquic_pn_enc_create_for_test(const uint8_t * secret)
 {
-    ptls_cipher_suite_t cipher = { 0, &ptls_openssl_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_minicrypto_aes128gcm, &ptls_minicrypto_sha256 };
     void *v_pn_enc = NULL;
     
     (void)picoquic_set_pn_enc_from_secret(&v_pn_enc, &cipher, 1, secret);
@@ -1587,7 +1587,7 @@ uint32_t picoquic_aead_get_checksum_length(void* aead_context)
 void * picoquic_setup_test_aead_context(int is_encrypt, const uint8_t * secret)
 {
     void * v_aead = NULL;
-    ptls_cipher_suite_t cipher = { 0, &ptls_openssl_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_minicrypto_aes128gcm, &ptls_minicrypto_sha256 };
 
     (void)picoquic_set_aead_from_secret(&v_aead, &cipher, is_encrypt, secret);
 
@@ -1600,7 +1600,7 @@ int picoquic_server_setup_ticket_aead_contexts(picoquic_quic_t* quic,
 {
     int ret = 0;
     uint8_t temp_secret[256]; /* secret_max */
-    ptls_cipher_suite_t cipher = { 0, &ptls_openssl_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_minicrypto_aes128gcm, &ptls_minicrypto_sha256 };
 
     if (cipher.hash->digest_size > sizeof(temp_secret)) {
         ret = PICOQUIC_ERROR_UNEXPECTED_ERROR;
@@ -1765,6 +1765,18 @@ int picoquic_tls_stream_process(picoquic_cnx_t* cnx)
                             sendbuf.base + send_offset[i], send_offset[i + 1] - send_offset[i], i);
                     }
                 }
+                if (cnx->client_mode) {
+                    switch (ctx->handshake_properties.client.early_data_acceptance) {
+                    case PTLS_EARLY_DATA_REJECTED:
+                        cnx->zero_rtt_data_accepted = 0;
+                        break;
+                    case PTLS_EARLY_DATA_ACCEPTED:
+                        cnx->zero_rtt_data_accepted = 1;
+                        break;
+                    default:
+                        break;
+                    }
+                }
             }
 
             stream->consumed_offset += epoch_data;
@@ -1903,9 +1915,9 @@ int picoquic_tls_stream_process(picoquic_cnx_t* cnx)
 int picoquic_create_cnxid_reset_secret(picoquic_quic_t* quic, picoquic_connection_id_t cnx_id,
     uint8_t reset_secret[PICOQUIC_RESET_SECRET_SIZE])
 {
-    /* Using OpenSSL for now: ptls_hash_algorithm_t ptls_openssl_sha256 */
+    /* Using OpenSSL for now: ptls_hash_algorithm_t ptls_minicrypto_sha256 */
     int ret = 0;
-    ptls_hash_algorithm_t* algo = &ptls_openssl_sha256;
+    ptls_hash_algorithm_t* algo = &ptls_minicrypto_sha256;
     ptls_hash_context_t* hash_ctx = algo->create();
     uint8_t final_hash[PTLS_MAX_DIGEST_SIZE];
 
@@ -1989,9 +2001,9 @@ int picoquic_tls_client_authentication_activated(picoquic_quic_t* quic) {
 static int picoquic_get_retry_token_hash(picoquic_quic_t* quic, struct sockaddr * addr_peer,
     uint8_t * token_header, uint32_t token_header_length, uint8_t * hash, uint32_t hash_max, uint32_t * hash_length)
 {
-    /*Using OpenSSL for now: ptls_hash_algorithm_t ptls_openssl_sha256 */
+    /*Using OpenSSL for now: ptls_hash_algorithm_t ptls_minicrypto_sha256 */
     int ret = 0;
-    ptls_hash_algorithm_t* algo = &ptls_openssl_sha256;
+    ptls_hash_algorithm_t* algo = &ptls_minicrypto_sha256;
     ptls_hash_context_t* hash_ctx = algo->create();
 
     *hash_length = 0;
@@ -2182,7 +2194,7 @@ int picoquic_cid_get_encrypt_global_ctx(void ** v_cid_enc, int is_enc, const voi
 {
     uint8_t cidkey[PTLS_MAX_SECRET_SIZE];
     uint8_t long_secret[PTLS_MAX_DIGEST_SIZE];
-    ptls_cipher_suite_t cipher = { 0, &ptls_openssl_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_minicrypto_aes128gcm, &ptls_minicrypto_sha256 };
     int ret;
 
     picoquic_cid_free_encrypt_global_ctx(*v_cid_enc);
