@@ -59,9 +59,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h>
+// #include <sys/socket.h>
+// #include <sys/time.h>
+// #include <sys/types.h>
+#include "lwip/sockets.h"
 
 #ifndef __USE_XOPEN2K
 #define __USE_XOPEN2K
