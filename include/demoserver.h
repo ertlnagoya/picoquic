@@ -31,6 +31,10 @@
  /* Defining first the Http 3.0 variant of the server 
   */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define H3ZERO_SERVER_FRAME_MAX 4096
 #define H3ZERO_COMMAND_MAX 256
 #define H3ZERO_RESPONSE_MAX (1 << 20)
@@ -100,5 +104,9 @@ int picoquic_h09_server_callback(picoquic_cnx_t* cnx,
 int picoquic_demo_server_callback(picoquic_cnx_t* cnx,
     uint64_t stream_id, uint8_t* bytes, size_t length,
     picoquic_call_back_event_t fin_or_event, void* callback_ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DEMO_SERVER_H */

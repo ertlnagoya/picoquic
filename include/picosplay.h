@@ -25,6 +25,10 @@
 #ifndef PICOSPLAY_H
 #define PICOSPLAY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*picosplay_comparator)(void *left, void *right);
 
 typedef struct picosplay_node {
@@ -53,5 +57,9 @@ void* picosplay_contents(picosplay_tree *tree);
 void picosplay_delete(picosplay_tree *tree, void *value);
 void picosplay_delete_hint(picosplay_tree *tree, picosplay_node *node);
 void picosplay_empty_tree(picosplay_tree *tree);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #endif /* PICOSPLAY_H */

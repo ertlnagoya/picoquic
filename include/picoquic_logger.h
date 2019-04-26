@@ -24,6 +24,10 @@
 #include <stdio.h>
 #include "picoquic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void picoquic_log_error_packet(FILE* F, uint8_t* bytes, size_t bytes_max, int ret);
 
 void picoquic_log_packet(FILE* F, int log_cnxid, picoquic_quic_t* quic, picoquic_cnx_t* cnx,
@@ -37,5 +41,9 @@ void picoquic_log_picotls_ticket(FILE* F, picoquic_connection_id_t cnx_id,
 const char * picoquic_log_fin_or_event_name(picoquic_call_back_event_t ev);
 void picoquic_log_time(FILE* F, picoquic_cnx_t* cnx, uint64_t current_time,
     const char* label1, const char* label2);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PICOQUIC_LOGGER_H */

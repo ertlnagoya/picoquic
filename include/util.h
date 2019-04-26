@@ -22,11 +22,16 @@
 #ifndef PICOQUIC_UTILS_H
 #define PICOQUIC_UTILS_H
 
+#include "userq_settings.h"
 #include <stdio.h>
 #include <inttypes.h>
 #include "picoquic.h"
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #ifdef WIN32
@@ -90,6 +95,10 @@ int picoquic_get_input_path(char * target_file_path, size_t file_path_max, const
 #define DBG_PRINTF(fmt, ...)
 #define DBG_FATAL_PRINTF(fmt, ...)
 
-#endif //#ifdef DISABLE_DEBUG_PRINTF
+#endif /* #ifdef DISABLE_DEBUG_PRINTF */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

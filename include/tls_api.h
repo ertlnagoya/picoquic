@@ -23,6 +23,10 @@
 #define TLS_API_H
 #include "picoquic_internal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PICOQUIC_LABEL_INITIAL_CLIENT "client in"
 #define PICOQUIC_LABEL_INITIAL_SERVER "server in"
 
@@ -143,5 +147,9 @@ void picoquic_cid_free_encrypt_global_ctx(void ** v_cid_enc);
 int picoquic_cid_get_encrypt_global_ctx(void ** v_cid_enc, int is_enc, const void * secret, int cid_length);
 void picoquic_cid_encrypt_global(void * cid_enc, const picoquic_connection_id_t * cid_in, picoquic_connection_id_t * cid_out);
 void picoquic_cid_decrypt_global(void * cid_ffx, const picoquic_connection_id_t * cid_in, picoquic_connection_id_t * cid_out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TLS_API_H */

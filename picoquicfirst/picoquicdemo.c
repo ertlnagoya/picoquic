@@ -71,7 +71,7 @@
 #endif
 #include <errno.h>
 
-#ifndef WOLFSSL_LWIP
+#ifndef USE_LWIP
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>

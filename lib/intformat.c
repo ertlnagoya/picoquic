@@ -19,8 +19,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "userq_settings.h"
 #include <stdint.h>
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #endif
 #ifndef WIN32

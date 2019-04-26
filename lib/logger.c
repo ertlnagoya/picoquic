@@ -22,9 +22,12 @@
 /*
 * Packet logging.
 */
+
+#include "userq_settings.h"
+
 #include <stdio.h>
 #include <string.h>
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #endif
 #include "fnv1a.h"
@@ -130,6 +133,7 @@ void picoquic_log_packet_address(FILE* F, uint64_t log_cnxid64, picoquic_cnx_t* 
         fprintf(F, "%d.%d.%d.%d:%d",
             addr[0], addr[1], addr[2], addr[3],
             ntohs(s4->sin_port));
+#if (AF_INET6 != 0)
     } else {
         struct sockaddr_in6* s6 = (struct sockaddr_in6*)addr_peer;
         uint8_t* addr = (uint8_t*)&s6->sin6_addr;
@@ -145,6 +149,7 @@ void picoquic_log_packet_address(FILE* F, uint64_t log_cnxid64, picoquic_cnx_t* 
                 fprintf(F, "%x", addr[(2 * i) + 1]);
             }
         }
+#endif
     }
 
     if (cnx != NULL) {

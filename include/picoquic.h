@@ -22,13 +22,15 @@
 #ifndef PICOQUIC_H
 #define PICOQUIC_H
 
+#include "userq_settings.h"
+
 #include <stdint.h>
 #ifdef _WINDOWS
 #include <WS2tcpip.h>
 #include <Ws2def.h>
 #include <winsock2.h>
 #endif
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #else
 #include <arpa/inet.h>

@@ -21,6 +21,10 @@
 #ifndef H3ZERO_H
 #define H3ZERO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define H3ZERO_NO_ERROR 0x0000 /* No error */
 #define H3ZERO_WRONG_SETTING_DIRECTION 0x0001 /* Setting sent in wrong direction */
 #define H3ZERO_PUSH_REFUSED 0x0002 /* Client refused pushed content */
@@ -234,5 +238,8 @@ void h3zero_delete_data_stream_state(h3zero_data_stream_state_t * stream_state);
 
 int hzero_qpack_huffman_decode(uint8_t * bytes, uint8_t * bytes_max,
     uint8_t * decoded, size_t max_decoded, size_t * nb_decoded);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* H3ZERO_H */

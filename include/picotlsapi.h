@@ -22,6 +22,10 @@
 #ifndef PICOTLSAPI_H
 #define PICOTLSAPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct st_ptls_buffer_t ptls_buffer_t;
 
 typedef struct _picotlsapi {
@@ -32,5 +36,9 @@ typedef struct _picotlsapi {
     int (*get_resume_ticket)(void*, const void*, size_t*);
     int (*set_resume_ticket)(void*, const void*, size_t*);
 } picotlsapi;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #endif /* PICOTLSAPI_H */

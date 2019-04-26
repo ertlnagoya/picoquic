@@ -47,11 +47,19 @@ value is encoded as 8 octets in network byte order.
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FNV1A_OFFSET 0xcbf29ce484222325ull
 #define FNV1A_PRIME 0x100000001b3ull
 
 uint64_t fnv1a_hash(uint64_t hash, uint8_t* bytes, size_t length);
 size_t fnv1a_protect(uint8_t* bytes, size_t length, size_t length_max);
 size_t fnv1a_check(uint8_t* bytes, size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

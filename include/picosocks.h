@@ -78,7 +78,7 @@
 #define __APPLE_USE_RFC_3542 /* IPV6_PKTINFO */
 #endif
 
-#ifdef WOLFSSL_LIWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #include "lwip/errno.h"
 #include "lwip/netdb.h"
@@ -103,6 +103,10 @@
 #endif
 
 #include "picoquic_internal.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define PICOQUIC_NB_SERVER_SOCKETS 1
 
@@ -142,4 +146,8 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
     int* server_addr_length,
     int* is_name);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* PICOSOCKS_H */
