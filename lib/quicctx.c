@@ -20,6 +20,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "userq_settings.h"
+
 #include "picoquic_internal.h"
 #include "tls_api.h"
 #include <stdlib.h>
@@ -27,7 +29,7 @@
 #ifndef _WINDOWS
 #include <sys/time.h>
 #endif
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #endif
 
@@ -472,6 +474,7 @@ static void picoquic_set_hash_key_by_address(picoquic_net_id_key_t * key, struct
         key4->sin_family = s4->sin_family;
         key4->sin_port = s4->sin_port;
     }
+#ifdef QUICIPV6
     else {
         struct sockaddr_in6 * key6 = (struct sockaddr_in6 *) &key->saddr;
         struct sockaddr_in6 * s6 = (struct sockaddr_in6 *) addr;
@@ -480,6 +483,7 @@ static void picoquic_set_hash_key_by_address(picoquic_net_id_key_t * key, struct
         key6->sin6_port = s6->sin6_port;
         /* TODO: special code for local addresses may be needed if scope is specified */
     }
+#endif
 }
 
 int picoquic_register_net_id(picoquic_quic_t* quic, picoquic_cnx_t* cnx, picoquic_path_t * path_x, struct sockaddr* addr)

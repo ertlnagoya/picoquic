@@ -19,12 +19,14 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "userq_settings.h"
+
 #include "fnv1a.h"
 #include "picoquic_internal.h"
 #include "tls_api.h"
 #include <stdlib.h>
 #include <string.h>
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #endif
 
@@ -1489,6 +1491,7 @@ int picoquic_prepare_server_address_migration(picoquic_cnx_t* cnx)
 
             memset(&dest_addr, 0, sizeof(struct sockaddr_storage));
 
+#ifdef QUICIPV6
             /* program a migration. */
             if (ipv4_received && cnx->path[0]->peer_addr.ss_family == AF_INET) {
                 /* select IPv4 */
@@ -1503,6 +1506,8 @@ int picoquic_prepare_server_address_migration(picoquic_cnx_t* cnx)
                 memcpy(&d6->sin6_addr, cnx->remote_parameters.prefered_address.ipv6Address, 16);
             }
             else {
+#endif
+            {
                 /* configure an IPv4 sockaddr */
                 struct sockaddr_in * d4 = (struct sockaddr_in *)&dest_addr;
                 d4->sin_family = AF_INET;

@@ -19,9 +19,11 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "userq_settings.h"
+
 #include "picosocks.h"
 #include "util.h"
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #include "lwip/def.h"
 #include "lwip/netdb.h"
@@ -71,26 +73,27 @@ static int picoquic_socket_set_pkt_info(SOCKET_TYPE sd, int af)
     else {
         ret = setsockopt(sd, IPPROTO_IP, IP_PKTINFO, (char*)&option_value, sizeof(int));
     }
-#else
-    if (af == AF_INET6) {
+#else /*Not _WINDOWS*/
+    if (af == AF_INET) {
         int val = 1;
-        ret = setsockopt(sd, IPPROTO_IPV6, IPV6_V6ONLY,
+#ifdef IP_PKTINFO
+        ret = lwip_setsockopt(sd, IPPROTO_IP, IP_PKTINFO, (char*)&val, sizeof(int));
+#else
+        /* The IP_PKTINFO structure is not defined on BSD */
+        ret = lwip_setsockopt(sd, IPPROTO_IP, IP_RECVDSTADDR, (char*)&val, sizeof(int));
+#endif        
+#ifdef QUICIPV6
+    } else {
+        int val = 1;
+        ret = lwip_setsockopt(sd, IPPROTO_IPV6, IPV6_V6ONLY,
             &val, sizeof(val));
         if (ret == 0) {
             val = 1;
             ret = setsockopt(sd, IPPROTO_IPV6, IPV6_RECVPKTINFO, (char*)&val, sizeof(int));
         }
-    }
-    else {
-        int val = 1;
-#ifdef IP_PKTINFO
-        ret = setsockopt(sd, IPPROTO_IP, IP_PKTINFO, (char*)&val, sizeof(int));
-#else
-        /* The IP_PKTINFO structure is not defined on BSD */
-        ret = setsockopt(sd, IPPROTO_IP, IP_RECVDSTADDR, (char*)&val, sizeof(int));
 #endif
     }
-#endif
+#endif /*Not _WINDOWS*/
 
     return ret;
 }
@@ -542,6 +545,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
                     }
                 }
             }
+#ifdef QUICIPV6
             else if (cmsg->cmsg_level == IPPROTO_IPV6) {
                 if (cmsg->cmsg_type == IPV6_PKTINFO) {
                     if (addr_dest != NULL && dest_length != NULL) {
@@ -563,6 +567,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
                     }
                 }
             }
+#endif
         }
     }
 
@@ -630,6 +635,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
 
                 control_length += WSA_CMSG_SPACE(sizeof(struct in_pktinfo));
             }
+#ifdef QUICIPV6
             else {
                 memset(cmsg, 0, WSA_CMSG_SPACE(sizeof(struct in6_pktinfo)));
                 cmsg->cmsg_level = IPPROTO_IPV6;
@@ -641,7 +647,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
 
                 control_length += WSA_CMSG_SPACE(sizeof(struct in6_pktinfo));
             }
-
+#endif
             if (addr_from->sa_family == AF_INET6) {
                 struct cmsghdr * cmsg_2 = WSA_CMSG_NXTHDR(&msg, cmsg);
                 if (cmsg_2 == NULL) {
@@ -736,6 +742,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
             pktinfo->s_addr = ((struct sockaddr_in*)addr_from)->sin_addr.s_addr;
             control_length += CMSG_SPACE(sizeof(struct in_addr));
 #endif
+#ifdef QUICIPV6
         } else if (addr_from->sa_family == AF_INET6) {
             memset(cmsg, 0, CMSG_SPACE(sizeof(struct in6_pktinfo)));
             cmsg->cmsg_level = IPPROTO_IPV6;
@@ -746,6 +753,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
             pktinfo6->ipi6_ifindex = dest_if;
 
             control_length += CMSG_SPACE(sizeof(struct in6_pktinfo));
+#endif
         } else {
             DBG_PRINTF("Unexpected address family: %d\n", addr_from->sa_family);
         }

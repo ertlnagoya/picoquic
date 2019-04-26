@@ -19,6 +19,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "userq_settings.h"
+
 /* Simple set of utilities */
 #ifdef _WINDOWS
 /* clang-format off */
@@ -27,7 +29,7 @@
 #include <WinSock2.h>
 #include <Ws2def.h>
 #endif
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #endif
 #include "picoquic_internal.h"
@@ -327,6 +329,7 @@ int picoquic_compare_addr(const struct sockaddr * expected, const struct sockadd
 #endif
                 ret = 0;
             }
+#ifdef QUICIPV6
         } else {
             struct sockaddr_in6 * ex = (struct sockaddr_in6 *)expected;
             struct sockaddr_in6 * ac = (struct sockaddr_in6 *)actual;
@@ -336,6 +339,7 @@ int picoquic_compare_addr(const struct sockaddr * expected, const struct sockadd
                 memcmp(&ex->sin6_addr, &ac->sin6_addr, 16) == 0) {
                 ret = 0;
             }
+#endif
         }
     }
 
@@ -348,8 +352,14 @@ int picoquic_store_addr(struct sockaddr_storage * stored_addr, const struct sock
     int len = 0;
     
     if (addr != NULL && addr->sa_family != 0) {
-        len = (int)((addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) :
-            sizeof(struct sockaddr_in6));
+        if(addr->sa_family == AF_INET){
+            len = (int) (sizeof(struct sockaddr_in));
+        }
+#ifdef QUICIPV6
+        else {
+            len = (int) (sizeof(struct sockaddr_in6));
+        }
+#endif
         memcpy(stored_addr, addr, len);
     }
     else {
@@ -366,10 +376,12 @@ void picoquic_get_ip_addr(struct sockaddr * addr, uint8_t ** ip_addr, uint8_t * 
         *ip_addr = (uint8_t *)&((struct sockaddr_in *)addr)->sin_addr;
         *ip_addr_len = 4;
     }
+#ifdef QUICIPV6
     else if(addr->sa_family == AF_INET6) {
         *ip_addr = (uint8_t *)&((struct sockaddr_in6 *)addr)->sin6_addr;
         *ip_addr_len = 16;
     }
+#endif
     else {
         *ip_addr = NULL;
         *ip_addr_len = 0;
