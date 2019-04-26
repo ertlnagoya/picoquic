@@ -27,13 +27,15 @@
  * - For initial packets, has to perform version checks.
  */
 
+#include "userq_settings.h"
+
 #include "fnv1a.h"
 #include "picoquic_internal.h"
 #include "tls_api.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WOLFSSL_LWIP
+#ifdef USE_LWIP
 #include "lwip/sockets.h"
 #endif
 
@@ -685,11 +687,23 @@ int picoquic_prepare_version_negotiation(
         /* Set length and addresses, and queue. */
         sp->length = byte_index;
         memset(&sp->addr_to, 0, sizeof(sp->addr_to));
-        memcpy(&sp->addr_to, addr_from,
-            (addr_from->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+        if (addr_from->sa_family == AF_INET){
+            memcpy(&sp->addr_to, addr_from, sizeof(struct sockaddr_in));            
+        }
+#ifdef QUICIPV6
+        else {
+            memcpy(&sp->addr_to, addr_from, sizeof(struct sockaddr_in6));
+        }
+#endif
         memset(&sp->addr_local, 0, sizeof(sp->addr_local));
-        memcpy(&sp->addr_local, addr_to,
-            (addr_to->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+        if (addr_to->sa_family == AF_INET){
+            memcpy(&sp->addr_local, addr_to, sizeof(struct sockaddr_in));
+        }
+#ifdef QUICIPV6
+        else {
+            memcpy(&sp->addr_local, addr_to, sizeof(struct sockaddr_in6));
+        }
+#endif
         sp->if_index_local = if_index_to;
         sp->cnxid_log64 = picoquic_val64_connection_id(ph->dest_cnx_id);
 
@@ -747,12 +761,27 @@ void picoquic_process_unexpected_cnxid(
             (void)picoquic_create_cnxid_reset_secret(quic, ph->dest_cnx_id, bytes + byte_index);
             byte_index += PICOQUIC_RESET_SECRET_SIZE;
             sp->length = byte_index;
+
             memset(&sp->addr_to, 0, sizeof(sp->addr_to));
-            memcpy(&sp->addr_to, addr_from,
-                (addr_from->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-            memset(&sp->addr_local, 0, sizeof(sp->addr_local));
-            memcpy(&sp->addr_local, addr_to,
-                (addr_to->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+            if (addr_from->sa_family == AF_INET){
+                memcpy(&sp->addr_to, addr_from, sizeof(struct sockaddr_in));            
+            }
+#ifdef QUICIPV6
+            else {
+                memcpy(&sp->addr_to, addr_from, sizeof(struct sockaddr_in6));
+            }
+#endif
+
+           memset(&sp->addr_local, 0, sizeof(sp->addr_local));
+            if (addr_to->sa_family == AF_INET){
+                memcpy(&sp->addr_local, addr_to, sizeof(struct sockaddr_in));
+            }
+#ifdef QUICIPV6
+            else {
+                memcpy(&sp->addr_local, addr_to, sizeof(struct sockaddr_in6));
+            }
+#endif
+            
             sp->if_index_local = if_index_to;
             sp->cnxid_log64 = picoquic_val64_connection_id(ph->dest_cnx_id);
 
@@ -809,11 +838,23 @@ void picoquic_queue_stateless_retry(picoquic_cnx_t* cnx,
 
 
         memset(&sp->addr_to, 0, sizeof(sp->addr_to));
-        memcpy(&sp->addr_to, addr_from,
-            (addr_from->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+        if (addr_from->sa_family == AF_INET){
+            memcpy(&sp->addr_to, addr_from, sizeof(struct sockaddr_in));            
+        }
+#ifdef QUICIPV6
+        else {
+            memcpy(&sp->addr_to, addr_from, sizeof(struct sockaddr_in6));
+        }
+#endif
         memset(&sp->addr_local, 0, sizeof(sp->addr_local));
-        memcpy(&sp->addr_local, addr_to,
-            (addr_to->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+        if (addr_to->sa_family == AF_INET){
+            memcpy(&sp->addr_local, addr_to, sizeof(struct sockaddr_in));
+        }
+#ifdef QUICIPV6
+        else {
+            memcpy(&sp->addr_local, addr_to, sizeof(struct sockaddr_in6));
+        }
+#endif
         sp->if_index_local = if_index_to;
         sp->cnxid_log64 = picoquic_val64_connection_id(picoquic_get_logging_cnxid(cnx));
 

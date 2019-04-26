@@ -45,21 +45,23 @@ static int bind_to_port(SOCKET_TYPE fd, int af, int port)
 #endif
         s4->sin_port = htons((unsigned short)port);
         addr_length = sizeof(struct sockaddr_in);
+#ifdef QUICIPV6
     } else {
         struct sockaddr_in6* s6 = (struct sockaddr_in6*)&sa;
 
         s6->sin6_family = AF_INET6;
         s6->sin6_port = htons((unsigned short)port);
         addr_length = sizeof(struct sockaddr_in6);
+#endif
     }
 
-    return bind(fd, (struct sockaddr*)&sa, addr_length);
+    return lwip_bind(fd, (struct sockaddr*)&sa, addr_length);
 }
 
 int picoquic_get_local_address(SOCKET_TYPE sd, struct sockaddr_storage * addr)
 {
     socklen_t name_len = sizeof(struct sockaddr_storage);
-    return getsockname(sd, (struct sockaddr *)addr, &name_len);
+    return lwip_getsockname(sd, (struct sockaddr *)addr, &name_len);
 }
 
 static int picoquic_socket_set_pkt_info(SOCKET_TYPE sd, int af)
@@ -251,7 +253,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
         {
             unsigned int ecn = 2;
             /* Request setting ECN_1 in outgoing packets */
-            if (setsockopt(sd, IPPROTO_IP, IP_TOS, &ecn, sizeof(ecn)) < 0) {
+            if (lwip_setsockopt(sd, IPPROTO_IP, IP_TOS, &ecn, sizeof(ecn)) < 0) {
                 DBG_PRINTF("setsockopt IPv4 IP_TOS (0x%x) fails, errno: %d\n", ecn, errno);
                 *send_set = 0;
             }
@@ -291,7 +293,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
 
 SOCKET_TYPE picoquic_open_client_socket(int af)
 {
-    SOCKET_TYPE sd = socket(af, SOCK_DGRAM, IPPROTO_UDP);
+    SOCKET_TYPE sd = lwip_socket(af, SOCK_DGRAM, IPPROTO_UDP);
 
     if (sd != INVALID_SOCKET) {
         if (picoquic_socket_set_pkt_info(sd, af) != 0) {
@@ -320,7 +322,7 @@ int picoquic_open_server_sockets(picoquic_server_sockets_t* sockets, int port)
 
     for (int i = 0; i < PICOQUIC_NB_SERVER_SOCKETS; i++) {
         if (ret == 0) {
-            sockets->s_socket[i] = socket(sock_af[i], SOCK_DGRAM, IPPROTO_UDP);
+            sockets->s_socket[i] = lwip_socket(sock_af[i], SOCK_DGRAM, IPPROTO_UDP);
         } else {
             sockets->s_socket[i] = INVALID_SOCKET;
         }
@@ -498,7 +500,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
     msg.msg_control = (void*)cmsg_buffer;
     msg.msg_controllen = sizeof(cmsg_buffer);
 
-    bytes_recv = recvmsg(fd, &msg, 0);
+    bytes_recv = lwip_recvmsg(fd, &msg, 0);
 
     if (bytes_recv <= 0) {
         *from_length = 0;
@@ -842,7 +844,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
         msg.msg_control = NULL;
     }
 
-    bytes_sent = sendmsg(fd, &msg, 0);
+    bytes_sent = lwip_sendmsg(fd, &msg, 0);
 
     return bytes_sent;
 }
@@ -892,7 +894,7 @@ int picoquic_select(SOCKET_TYPE* sockets,
         }
     }
 
-    ret_select = select(sockmax + 1, &readfds, NULL, NULL, &tv);
+    ret_select = lwip_select(sockmax + 1, &readfds, NULL, NULL, &tv);
 
     if (ret_select < 0) {
         bytes_recv = -1;
@@ -965,23 +967,27 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
 {
     int ret = 0;
     struct sockaddr_in* ipv4_dest = (struct sockaddr_in*)server_address;
+#ifdef QUICIPV6
     struct sockaddr_in6* ipv6_dest = (struct sockaddr_in6*)server_address;
+#endif
 
     /* get the IP address of the server */
     memset(server_address, 0, sizeof(struct sockaddr_storage));
     *is_name = 0;
     *server_addr_length = 0;
 
-    if (inet_pton(AF_INET, ip_address_text, &ipv4_dest->sin_addr) == 1) {
+    if (lwip_inet_pton(AF_INET, ip_address_text, &ipv4_dest->sin_addr) == 1) {
         /* Valid IPv4 address */
         ipv4_dest->sin_family = AF_INET;
         ipv4_dest->sin_port = htons((unsigned short)server_port);
         *server_addr_length = sizeof(struct sockaddr_in);
+#ifdef QUICIPV6
     } else if (inet_pton(AF_INET6, ip_address_text, &ipv6_dest->sin6_addr) == 1) {
         /* Valid IPv6 address */
         ipv6_dest->sin6_family = AF_INET6;
         ipv6_dest->sin6_port = htons((unsigned short)server_port);
         *server_addr_length = sizeof(struct sockaddr_in6);
+#endif
     } else {
         /* Server is described by name. Do a lookup for the IP address,
         * and then use the name as SNI parameter */
@@ -993,7 +999,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
         hints.ai_socktype = SOCK_DGRAM;
         hints.ai_protocol = IPPROTO_UDP;
 
-        if (getaddrinfo(ip_address_text, NULL, &hints, &result) != 0) {
+        if (lwip_getaddrinfo(ip_address_text, NULL, &hints, &result) != 0) {
             fprintf(stderr, "Cannot get IP address for %s\n", ip_address_text);
             ret = -1;
         } else {
@@ -1010,6 +1016,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
 #endif
                 *server_addr_length = sizeof(struct sockaddr_in);
                 break;
+#ifdef QUICIPV6
             case AF_INET6:
                 ipv6_dest->sin6_family = AF_INET6;
                 ipv6_dest->sin6_port = htons((unsigned short)server_port);
@@ -1018,6 +1025,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
                     sizeof(ipv6_dest->sin6_addr));
                 *server_addr_length = sizeof(struct sockaddr_in6);
                 break;
+#endif
             default:
                 fprintf(stderr, "Error getting IPv6 address for %s, family = %d\n",
                     ip_address_text, result->ai_family);
@@ -1025,7 +1033,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
                 break;
             }
 
-            freeaddrinfo(result);
+            lwip_freeaddrinfo(result);
         }
     }
 
