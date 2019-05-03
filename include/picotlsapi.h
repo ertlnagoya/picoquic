@@ -38,7 +38,7 @@ typedef struct _picotlsapi {
 } picotlsapi;
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif
 
 #endif /* PICOTLSAPI_H */
