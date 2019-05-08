@@ -944,28 +944,16 @@ int picoquic_parse_header_and_decrypt(
     int * new_context_created);
 
 /* Handling of packet logging */
-void picoquic_log_decrypted_segment(void* F_log, int log_cnxid, picoquic_cnx_t* cnx,
-    int receiving, picoquic_packet_header * ph, uint8_t* bytes, size_t length, int ret);
+void picoquic_log_decrypted_segment(int log_cnxid, picoquic_cnx_t* cnx, int receiving, 
+        picoquic_packet_header * ph, uint8_t* bytes, size_t length, int ret);
 
-void picoquic_log_outgoing_segment(void* F_log, int log_cnxid, picoquic_cnx_t* cnx,
-    uint8_t * bytes,
-    uint64_t sequence_number,
-    uint32_t length,
-    uint8_t* send_buffer, uint32_t send_length);
+void picoquic_log_outgoing_segment(void* F_log, int log_cnxid, picoquic_cnx_t* cnx, uint8_t * bytes,
+    uint64_t sequence_number, uint32_t length, uint8_t* send_buffer, uint32_t send_length);
 
-void picoquic_log_packet_address(FILE* F, uint64_t log_cnxid64, picoquic_cnx_t* cnx,
+void picoquic_log_packet_address(uint64_t log_cnxid64, picoquic_cnx_t* cnx,
     struct sockaddr* addr_peer, int receiving, size_t length, uint64_t current_time);
 
-void picoquic_log_prefix_initial_cid64(FILE* F, uint64_t log_cnxid64);
-
-void picoquic_log_error_packet(FILE* F, uint8_t* bytes, size_t bytes_max, int ret);
-void picoquic_log_transport_extension(FILE* F, picoquic_cnx_t* cnx, int log_cnxid);
-void picoquic_log_congestion_state(FILE* F, picoquic_cnx_t* cnx, uint64_t current_time);
-void picoquic_log_picotls_ticket(FILE* F, picoquic_connection_id_t cnx_id,
-    uint8_t* ticket, uint16_t ticket_length);
-const char * picoquic_log_fin_or_event_name(picoquic_call_back_event_t ev);
-void picoquic_log_time(FILE* F, picoquic_cnx_t* cnx, uint64_t current_time,
-    const char* label1, const char* label2);
+void picoquic_log_prefix_initial_cid64(uint64_t log_cnxid64);
 
 #define PICOQUIC_SET_LOG(quic, F) (quic)->F_log = (void*)(F)
 

@@ -3063,8 +3063,7 @@ int picoquic_prepare_packet(picoquic_cnx_t* cnx,
 
     /* if needed, log that the packet is sent */
     if (*send_length > 0 && cnx->quic->F_log != NULL) {
-        picoquic_log_packet_address(cnx->quic->F_log,
-            picoquic_val64_connection_id(picoquic_get_logging_cnxid(cnx)),
+        picoquic_log_packet_address(picoquic_val64_connection_id(picoquic_get_logging_cnxid(cnx)),
             cnx, (struct sockaddr *)&addr_to_log, 0, *send_length, current_time);
     }
 

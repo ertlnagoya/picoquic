@@ -1000,7 +1000,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
         hints.ai_protocol = IPPROTO_UDP;
 
         if (lwip_getaddrinfo(ip_address_text, NULL, &hints, &result) != 0) {
-            fprintf(stderr, "Cannot get IP address for %s\n", ip_address_text);
+            DBG_PRINTF("Cannot get IP address for %s\n", ip_address_text);
             ret = -1;
         } else {
             *is_name = 1;
@@ -1027,7 +1027,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
                 break;
 #endif
             default:
-                fprintf(stderr, "Error getting IPv6 address for %s, family = %d\n",
+                DBG_PRINTF("Error getting IPv6 address for %s, family = %d\n",
                     ip_address_text, result->ai_family);
                 ret = -1;
                 break;

@@ -786,7 +786,7 @@ void picoquic_process_unexpected_cnxid(
             sp->cnxid_log64 = picoquic_val64_connection_id(ph->dest_cnx_id);
 
             if (quic->F_log != NULL) {
-                picoquic_log_prefix_initial_cid64(quic->F_log, sp->cnxid_log64);
+                picoquic_log_prefix_initial_cid64(sp->cnxid_log64);
                 fprintf(quic->F_log, "Unexpected connection ID, sending stateless reset.\n");
             }
 
@@ -1662,7 +1662,7 @@ int picoquic_incoming_segment(
 
             /* if needed, log that the packet is received */
             if (quic->F_log != NULL) {
-                picoquic_log_packet_address(quic->F_log,
+                picoquic_log_packet_address(
                     picoquic_val64_connection_id((cnx == NULL) ? ph.dest_cnx_id : picoquic_get_logging_cnxid(cnx)),
                     cnx, addr_from, 1, packet_length, current_time);
             }
@@ -1673,7 +1673,7 @@ int picoquic_incoming_segment(
     }
 
     /* Log the incoming segment */
-    picoquic_log_decrypted_segment(quic->F_log, 1, cnx, 1, &ph, bytes, (uint32_t)*consumed, ret);
+    picoquic_log_decrypted_segment(1, cnx, 1, &ph, bytes, (uint32_t)*consumed, ret);
 
     if (ret == 0) {
         if (cnx == NULL) {
