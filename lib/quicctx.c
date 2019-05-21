@@ -417,10 +417,8 @@ picoquic_stateless_packet_t* picoquic_dequeue_stateless_packet(picoquic_quic_t* 
         quic->pending_stateless_packet = sp->next_packet;
         sp->next_packet = NULL;
 
-        if (quic->F_log != NULL) {
-            picoquic_log_packet_address(sp->cnxid_log64, NULL, 
-                (struct sockaddr*)&sp->addr_to, 0, sp->length, picoquic_get_quic_time(quic));
-        }
+        picoquic_log_packet_address(sp->cnxid_log64, NULL, 
+            (struct sockaddr*)&sp->addr_to, 0, sp->length, picoquic_get_quic_time(quic));
     }
 
     return sp;
@@ -843,9 +841,7 @@ void picoquic_delete_path(picoquic_cnx_t* cnx, int path_index)
     picoquic_packet_t* p = NULL;
 
     DBG_PRINTF("delete path[%d] (%x)\n", path_index, path_x);
-    if (cnx->quic->F_log != NULL) {
-        fflush(cnx->quic->F_log);
-    }
+    DBG_FLUSH();
         
     /* Remove old path data from retransmit queue */
     for (picoquic_packet_context_enum pc = 0; pc < picoquic_nb_packet_context; pc++)
@@ -1678,6 +1674,10 @@ uint64_t picoquic_current_time()
     * Account for microseconds elapsed between 1601 and 1970.
     */
     now -= 11644473600000000ULL;
+#elif defined USE_LWIP
+    SYSUTM utime;
+    get_utm(&utime);
+    now = (uint64_t)utime;
 #else
     struct timeval tv;
     (void)gettimeofday(&tv, NULL);

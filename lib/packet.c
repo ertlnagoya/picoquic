@@ -707,11 +707,7 @@ int picoquic_prepare_version_negotiation(
         sp->if_index_local = if_index_to;
         sp->cnxid_log64 = picoquic_val64_connection_id(ph->dest_cnx_id);
 
-        if (quic->F_log != NULL) {
-            picoquic_log_outgoing_segment(quic->F_log, 1, NULL,
-                bytes, 0, (uint32_t)sp->length,
-                bytes, (uint32_t)sp->length);
-        }
+        picoquic_log_outgoing_segment(quic->F_log, 1, NULL, bytes, 0, (uint32_t)sp->length, bytes, (uint32_t)sp->length);
 
         picoquic_queue_stateless_packet(quic, sp);
     }
@@ -785,10 +781,8 @@ void picoquic_process_unexpected_cnxid(
             sp->if_index_local = if_index_to;
             sp->cnxid_log64 = picoquic_val64_connection_id(ph->dest_cnx_id);
 
-            if (quic->F_log != NULL) {
-                picoquic_log_prefix_initial_cid64(sp->cnxid_log64);
-                fprintf(quic->F_log, "Unexpected connection ID, sending stateless reset.\n");
-            }
+            picoquic_log_prefix_initial_cid64(sp->cnxid_log64);
+            DBG_PRINTF("Unexpected connection ID, sending stateless reset.\n");
 
 
             picoquic_queue_stateless_packet(quic, sp);
@@ -858,11 +852,7 @@ void picoquic_queue_stateless_retry(picoquic_cnx_t* cnx,
         sp->if_index_local = if_index_to;
         sp->cnxid_log64 = picoquic_val64_connection_id(picoquic_get_logging_cnxid(cnx));
 
-        if (cnx->quic->F_log != NULL) {
-            picoquic_log_outgoing_segment(cnx->quic->F_log, 1, cnx,
-                bytes, 0, (uint32_t)sp->length,
-                bytes, (uint32_t)sp->length);
-        }
+        picoquic_log_outgoing_segment(cnx->quic->F_log, 1, cnx, bytes, 0, (uint32_t)sp->length, bytes, (uint32_t)sp->length);
 
         picoquic_queue_stateless_packet(cnx->quic, sp);
     }
@@ -1661,11 +1651,9 @@ int picoquic_incoming_segment(
             *previous_dest_id = ph.dest_cnx_id;
 
             /* if needed, log that the packet is received */
-            if (quic->F_log != NULL) {
-                picoquic_log_packet_address(
-                    picoquic_val64_connection_id((cnx == NULL) ? ph.dest_cnx_id : picoquic_get_logging_cnxid(cnx)),
-                    cnx, addr_from, 1, packet_length, current_time);
-            }
+            picoquic_log_packet_address(
+                picoquic_val64_connection_id((cnx == NULL) ? ph.dest_cnx_id : picoquic_get_logging_cnxid(cnx)),
+                cnx, addr_from, 1, packet_length, current_time);
         }
         else if (picoquic_compare_connection_id(previous_dest_id, &ph.dest_cnx_id) != 0) {
             ret = PICOQUIC_ERROR_CNXID_SEGMENT;

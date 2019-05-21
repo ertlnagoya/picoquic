@@ -80,10 +80,8 @@ int picoquic_get_input_path(char * target_file_path, size_t file_path_max, const
 #ifndef DISABLE_DEBUG_PRINTF
 
 #define DBG_PRINTF_FILENAME_MAX 24
-#define DBG_PRINTF(fmt, ...)      syslog(LOG_NOTICE, fmt)                                                           //\
-    // debug_printf("%s:%u [%s]: " fmt "\n",                                                    \
-    //     __FILE__ + MAX(DBG_PRINTF_FILENAME_MAX, sizeof(__FILE__)) - DBG_PRINTF_FILENAME_MAX, \
-    //     __LINE__, __FUNCTION__, __VA_ARGS__)
+#define DBG_PRINTF(...)      syslog(LOG_NOTICE, __VA_ARGS__)
+#define DBG_FLUSH()	syslog_flush();
 
 #define DBG_FATAL_PRINTF(fmt, ...)                    \
     do {                                              \
@@ -95,6 +93,7 @@ int picoquic_get_input_path(char * target_file_path, size_t file_path_max, const
 
 #define DBG_PRINTF(fmt, ...)
 #define DBG_FATAL_PRINTF(fmt, ...)
+#define DBG_FLUSH();
 
 #endif /* #ifdef DISABLE_DEBUG_PRINTF */
 

@@ -499,11 +499,9 @@ uint32_t picoquic_protect_packet(picoquic_cnx_t* cnx,
     send_length += /* header_length */ h_length;
 
     /* if needed, log the segment before header protection is applied */
-    if (cnx->quic->F_log != NULL) {
         picoquic_log_outgoing_segment(cnx->quic->F_log, 1, cnx,
             bytes, sequence_number, length,
             send_buffer, send_length);
-    }
 
     /* Next, encrypt the PN -- The sample is located after the pn_offset */
     sample_offset = /* header_length */ pn_offset + 4;
@@ -3060,7 +3058,7 @@ int picoquic_prepare_packet(picoquic_cnx_t* cnx,
     }
 
     /* if needed, log that the packet is sent */
-    if (*send_length > 0 && cnx->quic->F_log != NULL) {
+    if (*send_length > 0) {
         picoquic_log_packet_address(picoquic_val64_connection_id(picoquic_get_logging_cnxid(cnx)),
             cnx, (struct sockaddr *)&addr_to_log, 0, *send_length, current_time);
     }
