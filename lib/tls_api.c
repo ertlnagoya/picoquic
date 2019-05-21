@@ -1010,7 +1010,7 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
         ret = -1;
     } else {
         memset(ctx, 0, sizeof(ptls_context_t));
-        ctx->random_bytes = ptls_minicrypto_random_bytes;
+        ctx->random_bytes = ptls_openssl_random_bytes; //ptls_minicrypto_random_bytes;
         ctx->key_exchanges = picoquic_key_exchanges; /* was:  ptls_minicrypto_key_exchanges; */
         ctx->cipher_suites = picoquic_cipher_suites; /* was: ptls_minicrypto_cipher_suites; */
 

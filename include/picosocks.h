@@ -92,7 +92,7 @@
 #define INVALID_SOCKET -1
 #endif
 #ifndef SOCKET_CLOSE
-#define SOCKET_CLOSE(x) close(x)
+#define SOCKET_CLOSE(x) lwip_close(x)
 #endif
 #ifndef WSA_LAST_ERROR
 #define WSA_LAST_ERROR(x) ((long)(x))
