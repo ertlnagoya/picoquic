@@ -19,9 +19,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "picoquic_internal.h"
 #include "h3zero.h"
 #include "democlient.h"

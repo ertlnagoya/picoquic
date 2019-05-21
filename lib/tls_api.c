@@ -36,8 +36,6 @@
 #include "wolfssl/openssl/engine.h"
 #define X509_FILETYPE_PEM 8
 
-#include <stdio.h>
-#include <string.h>
 #define OPENSSL_NO_ENGINE
 
 #define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))

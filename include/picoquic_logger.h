@@ -21,7 +21,6 @@
 
 #ifndef PICOQUIC_LOGGER_H
 #define PICOQUIC_LOGGER_H
-#include <stdio.h>
 #include "picoquic.h"
 
 #ifdef __cplusplus

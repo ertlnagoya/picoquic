@@ -23,8 +23,6 @@
 #define PICOQUIC_UTILS_H
 
 #include "userq_settings.h"
-#include <stdio.h>
-#include <inttypes.h>
 #include "picoquic.h"
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
