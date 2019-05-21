@@ -1801,7 +1801,8 @@ int picoquic_process_ack_of_ack_frame(
 
             range++;
             if (largest + 1 < range) {
-                DBG_PRINTF("ack range error: largest=%" PRIx64 ", range=%" PRIx64, largest, range);
+                DBG_PRINTF("ack range error: largest=%lx%lx, range=%lx%lx",
+                    (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range);
                 ret = -1;
                 break;
             }
@@ -1832,8 +1833,9 @@ int picoquic_process_ack_of_ack_frame(
             }
 
             if (largest < block_to_block) {
-                DBG_PRINTF("ack gap error: largest=%" PRIx64 ", range=%" PRIx64 ", gap=%" PRIu64,
-                    largest, range, block_to_block - range);
+                DBG_PRINTF("ack gap error: largest=%lx%lx, range=%%lx%lx, gap=%lx%lx",
+                    (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range,
+                    (uint32_t)( (block_to_block -range) >> 32), (uint32_t)(block_to_block - range));
                 ret = -1;
                 break;
             }
@@ -2095,7 +2097,8 @@ uint8_t* picoquic_decode_ack_frame_maybe_ecn(picoquic_cnx_t* cnx, uint8_t* bytes
 
             range ++;
             if (largest + 1 < range) {
-                DBG_PRINTF("ack range error: largest=%" PRIx64 ", range=%" PRIx64, largest, range);
+                DBG_PRINTF("ack range error: largest=%lx%lx, range=%lx%lx",
+                    (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range);
                 picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, first_byte);
                 bytes = NULL;
                 break;
@@ -2125,8 +2128,9 @@ uint8_t* picoquic_decode_ack_frame_maybe_ecn(picoquic_cnx_t* cnx, uint8_t* bytes
             block_to_block += range;
 
             if (largest < block_to_block) {
-                DBG_PRINTF("ack gap error: largest=%" PRIx64 ", range=%" PRIx64 ", gap=%" PRIu64,
-                    largest, range, block_to_block - range);
+                DBG_PRINTF("ack gap error: largest=%lx%lx, range=%lx%lx, gap=%lx%lx",
+                    (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range,
+                    (uint32_t)( (block_to_block - range) >> 32), (uint32_t)(block_to_block - range));
                 picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, first_byte);
                 bytes = NULL;
                 break;
