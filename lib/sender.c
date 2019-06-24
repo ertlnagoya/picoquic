@@ -1091,9 +1091,9 @@ int picoquic_retransmit_needed(picoquic_cnx_t* cnx,
                     }
 
                     if (p->ptype < picoquic_packet_1rtt_protected) {
-                        DBG_PRINTF("Retransmit packet type %d, pc=%d, seq = %llx, is_client = %d\n",
+                        DBG_PRINTF("Retransmit packet type %d, pc=%d, seq = %lx%lx, is_client = %d\n",
                             p->ptype, p->pc,
-                            (unsigned long long)p->sequence_number, cnx->client_mode);
+                            (uint32_t)(p->sequence_number >> 32), (uint32_t)p->sequence_number, cnx->client_mode);
                     }
 
                     /* special case for the client initial */

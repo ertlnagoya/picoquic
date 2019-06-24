@@ -119,6 +119,7 @@ void picoquic_log_packet_address(uint64_t log_cnxid64, picoquic_cnx_t* cnx,
     uint64_t time_sec = 0;
     uint32_t time_usec = 0;
 
+    DBG_FLUSH();
     picoquic_log_prefix_initial_cid64(log_cnxid64);
 
     DBG_PRINTF((receiving) ? "Receiving %d bytes from " : "Sending %d bytes to ", (int)length);
@@ -155,7 +156,7 @@ void picoquic_log_packet_address(uint64_t log_cnxid64, picoquic_cnx_t* cnx,
         time_usec = (uint32_t)(delta_t % 1000000);
     }
 
-    DBG_PRINTF(" at T=%lu.%06d (%lx%lx)\n", (uint32_t)time_sec, time_usec, (uint32_t)(current_time >> 32), (uint32_t)current_time);
+    DBG_PRINTF(" at T=%d.%06d (%d)\n", (uint32_t)time_sec, time_usec, (uint32_t)current_time);
     DBG_FLUSH();
 }
 
@@ -355,19 +356,25 @@ void picoquic_log_connection_id(picoquic_connection_id_t * cid)
 
 void picoquic_log_packet_header(uint64_t log_cnxid64, picoquic_packet_header* ph, int receiving)
 {
-    DBG_PRINTF("\n");
+    DBG_FLUSH();
+    //DBG_PRINTF("\n");
     picoquic_log_prefix_initial_cid64(log_cnxid64);
 
-    DBG_PRINTF("%s packet type: %d (%s), S%d,", (receiving != 0)?"Receiving":"Sending",
-        ph->ptype, picoquic_log_ptype_name(ph->ptype), ph->spin);
+    DBG_PRINTF("%s packet type: %d (%s), ", (receiving != 0)?"Receiving":"Sending",
+        ph->ptype, picoquic_log_ptype_name(ph->ptype));
+
+    DBG_PRINTF("S%d,", ph->spin);
 
     switch (ph->ptype) {
     case picoquic_packet_1rtt_protected:
         /* Short packets. Log dest CID and Seq number. */
+        DBG_PRINTF("\n");
+        picoquic_log_prefix_initial_cid64(log_cnxid64);
         DBG_PRINTF("    ");
         picoquic_log_connection_id(&ph->dest_cnx_id);
         DBG_PRINTF(", Seq: %d (%lu%lu), Phi: %d,\n", ph->pn,
          (uint32_t)(ph->pn64 >> 32), (uint32_t)ph->pn64, ph->key_phase);
+        DBG_FLUSH();
         break;
     case picoquic_packet_version_negotiation:
         /* V nego. log both CID */
@@ -376,11 +383,13 @@ void picoquic_log_packet_header(uint64_t log_cnxid64, picoquic_packet_header* ph
         DBG_PRINTF(", ");
         picoquic_log_connection_id(&ph->srce_cnx_id);
         DBG_PRINTF("\n");
+        DBG_FLUSH();
         break;
     default:
         /* Long packets. Log Vnum, both CID, Seq num, Payload length */
         DBG_PRINTF(" Version %x,\n", ph->vn);
         DBG_FLUSH();
+        picoquic_log_prefix_initial_cid64(log_cnxid64);
         DBG_PRINTF("    ");
         picoquic_log_connection_id(&ph->dest_cnx_id);
         DBG_PRINTF(", ");
@@ -388,6 +397,7 @@ void picoquic_log_packet_header(uint64_t log_cnxid64, picoquic_packet_header* ph
         DBG_PRINTF(", Seq: %x, pl: %d\n", ph->pn, ph->pl_val);
         DBG_FLUSH();
         if (ph->ptype == picoquic_packet_initial) {
+            picoquic_log_prefix_initial_cid64(log_cnxid64);
             DBG_PRINTF("    Token length: %d", ph->token_length);
             if (ph->token_length > 0) {
                 uint32_t printed_length = (ph->token_length > 16) ? 16 : ph->token_length;
@@ -931,6 +941,7 @@ size_t picoquic_log_new_connection_id_frame(uint8_t* bytes, size_t bytes_max)
             DBG_PRINTF("%02x", bytes[byte_index++]);
         }
         DBG_PRINTF("\n");
+        DBG_FLUSH();
     }
 
     return byte_index;
@@ -1023,6 +1034,7 @@ size_t picoquic_log_crypto_hs_frame(uint8_t* bytes, size_t bytes_max)
     size_t l_off = 0;
     size_t l_len = 0;
 
+    DBG_FLUSH();
     if (bytes_max > byte_index) {
         l_off = picoquic_varint_decode(bytes + byte_index, bytes_max - byte_index, &offset);
         byte_index += l_off;
@@ -1160,6 +1172,7 @@ void picoquic_log_frames(uint64_t cnx_id64, uint8_t* bytes, size_t length)
             break;
         }
         }
+        DBG_FLUSH();
     }
 }
 
@@ -1214,6 +1227,7 @@ void picoquic_log_decrypted_segment(int log_cnxid, picoquic_cnx_t* cnx,
         picoquic_log_frames(log_cnxid64, bytes + ph->offset, ph->payload_length);
     }
     DBG_PRINTF("\n");
+    DBG_FLUSH();
 }
 
 void picoquic_log_outgoing_segment(void* F_log, int log_cnxid, picoquic_cnx_t* cnx,
@@ -1253,6 +1267,7 @@ void picoquic_log_outgoing_segment(void* F_log, int log_cnxid, picoquic_cnx_t* c
     }
     /* log the segment. */
     picoquic_log_decrypted_segment(log_cnxid, cnx, 0, &ph, bytes, length, ret);
+    DBG_FLUSH();
 }
 
 void picoquic_log_processing(picoquic_cnx_t* cnx, size_t length, int ret)
@@ -1267,7 +1282,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
 {
     int ret = 0;
     size_t byte_index = 0;
-
+    DBG_FLUSH();
     if (bytes_max < 256)
     {
         switch (client_mode) {
@@ -1343,6 +1358,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                             DBG_PRINTF("        %08x\n", supported_version);
                         }
                     }
+                    DBG_FLUSH();
                 }
             }
             break;
@@ -1418,6 +1434,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                                 DBG_PRINTF("\n");
                             }
                         }
+                        DBG_FLUSH();
                     }
                 }
             }
@@ -1452,6 +1469,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                 DBG_PRINTF("%02x", bytes[byte_index++]);
             }
             DBG_PRINTF("\n");
+            DBG_FLUSH();
         }
     }
 }

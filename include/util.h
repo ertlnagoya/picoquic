@@ -27,6 +27,7 @@
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
 #include <t_syslog.h>
+#include <test_lib.h>
 #endif
 
 #ifdef __cplusplus
