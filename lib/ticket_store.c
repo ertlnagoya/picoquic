@@ -242,6 +242,7 @@ int picoquic_get_ticket(picoquic_stored_ticket_t* p_first_ticket,
     return ret;
 }
 
+#ifdef ENABLE_FILESYSTEM
 int picoquic_save_tickets(const picoquic_stored_ticket_t* first_ticket,
     uint64_t current_time,
     char const* ticket_file_name)
@@ -363,6 +364,22 @@ int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
 
     return ret;
 }
+
+#else /* ENABLE_FILESYSTEM */
+
+int picoquic_save_tickets(const picoquic_stored_ticket_t* first_ticket,
+    uint64_t current_time,
+    char const* ticket_file_name)
+{
+    return PICOQUIC_ERROR_INVALID_FILE;
+}
+
+int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
+    uint64_t current_time, char const* ticket_file_name)
+{
+    return PICOQUIC_ERROR_NO_SUCH_FILE;
+}
+#endif
 
 void picoquic_free_tickets(picoquic_stored_ticket_t** pp_first_ticket)
 {

@@ -254,6 +254,7 @@ int picoquic_get_token(picoquic_stored_token_t* p_first_token,
     return ret;
 }
 
+#ifdef ENABLE_FILESYSTEM
 int picoquic_save_tokens(const picoquic_stored_token_t* first_token,
     uint64_t current_time,
     char const* token_file_name)
@@ -375,6 +376,19 @@ int picoquic_load_tokens(picoquic_stored_token_t** pp_first_token,
 
     return ret;
 }
+#else /*ENABLE_FILESYSTEM*/
+int picoquic_save_tokens(const picoquic_stored_token_t* first_token,
+    uint64_t current_time, char const* token_file_name)
+{
+    return PICOQUIC_ERROR_INVALID_FILE;
+}
+
+int picoquic_load_tokens(picoquic_stored_token_t** pp_first_token,
+    uint64_t current_time, char const* token_file_name)
+{
+    return PICOQUIC_ERROR_INVALID_FILE;
+}
+#endif
 
 void picoquic_free_tokens(picoquic_stored_token_t** pp_first_token)
 {
