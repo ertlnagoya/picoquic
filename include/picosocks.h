@@ -56,9 +56,9 @@
 #define socklen_t int
 #endif
 /* clang-format on */
-#else /* Linux */
-
-#include "getopt.h"
+#endif
+#ifndef USE_LWIP /* Linux */
+ #include "getopt.h"
 
 #ifndef __USE_XOPEN2K
 #define __USE_XOPEN2K
@@ -72,6 +72,7 @@
 #ifndef __APPLE_USE_RFC_3542
 #define __APPLE_USE_RFC_3542 /* IPV6_PKTINFO */
 #endif
+#endif /* Linux */
 
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
@@ -89,11 +90,13 @@
 #ifndef SOCKET_CLOSE
 #define SOCKET_CLOSE(x) lwip_close(x)
 #endif
+
+#ifndef USE_LWIP
 #ifndef WSA_LAST_ERROR
 #define WSA_LAST_ERROR(x) ((long)(x))
 #endif
 #ifndef IPV6_RECVPKTINFO
-//#define IPV6_RECVPKTINFO IPV6_PKTINFO /* Cygwin */
+#define IPV6_RECVPKTINFO IPV6_PKTINFO /* Cygwin */
 #endif
 #endif
 
