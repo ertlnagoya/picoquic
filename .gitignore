@@ -21,3 +21,4 @@ Release
 */*.ilk
 *.b
 /build/*
+.DS_Store

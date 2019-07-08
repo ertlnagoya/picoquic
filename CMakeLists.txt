@@ -68,6 +68,11 @@ find_package(PTLS REQUIRED)
 message(STATUS "picotls/include: ${PTLS_INCLUDE_DIRS}" )
 message(STATUS "picotls libraries: ${PTLS_LIBRARIES}" )
 
+set(CIFRA_INCLUDE_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/../picotls/deps/cifra/
+)
+include_directories(${CIFRA_INCLUDE_DIR})
+
 set(WOLFSSL_INCLUDE_DIR 
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib
     ${CMAKE_CURRENT_SOURCE_DIR}/../wolfSSL-lib/wolfssl
