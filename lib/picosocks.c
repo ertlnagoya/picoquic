@@ -883,7 +883,7 @@ int picoquic_select(SOCKET_TYPE* sockets,
 
     if (delta_t <= 0) {
         tv.tv_sec = 0;
-        tv.tv_usec = 0;
+        tv.tv_usec = 10;
     } else {
         if (delta_t > 10000000) {
             tv.tv_sec = (long)10;
