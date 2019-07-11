@@ -164,10 +164,11 @@ static int picoquic_demo_client_open_stream(picoquic_cnx_t* cnx,
             ret = -1;
         }
 #else
-        stream_ctx->F = fopen(fname, (is_binary == 0) ? "w" : "wb");
-        if (stream_ctx->F == NULL) {
-            ret = -1;
-        }
+        // stream_ctx->F = fopen(fname, (is_binary == 0) ? "w" : "wb");
+        // if (stream_ctx->F == NULL) {
+        //     ret = -1;
+        // }
+        DBG_PRINTF("No FILE System\n");
 #endif
         if (ret != 0) {
             DBG_PRINTF("Cannot create file: %s\n", fname);
@@ -274,7 +275,7 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
         /* TODO: parse the frames. */
         /* TODO: check settings frame */
         stream_ctx = picoquic_demo_client_find_stream(ctx, stream_id);
-        if (stream_ctx != NULL && stream_ctx->F != NULL) {
+        if (stream_ctx != NULL /*&& stream_ctx->F != NULL*/) {
             if (length > 0) {
                 switch (ctx->alpn) {
                 case picoquic_alpn_http_3: {
@@ -288,7 +289,7 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
                             break;
                         }
                         else if (available_data > 0) {
-                            ret = (fwrite(bytes, 1, available_data, stream_ctx->F) > 0) ? 0 : -1;
+                            //ret = (fwrite(bytes, 1, available_data, stream_ctx->F) > 0) ? 0 : -1;
                             stream_ctx->received_length += available_data;
                             bytes += available_data;
                         }
@@ -297,7 +298,8 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
                 }
                 case picoquic_alpn_http_0_9:
                 default:
-                    ret = (fwrite(bytes, 1, length, stream_ctx->F) > 0) ? 0 : -1;
+                    //ret = (fwrite(bytes, 1, length, stream_ctx->F) > 0) ? 0 : -1;
+                    DBG_PRINTF("%s\n", bytes);
                     stream_ctx->received_length += length;
                     break;
                 }

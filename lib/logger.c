@@ -1272,8 +1272,9 @@ void picoquic_log_outgoing_segment(void* F_log, int log_cnxid, picoquic_cnx_t* c
 
 void picoquic_log_processing(picoquic_cnx_t* cnx, size_t length, int ret)
 {
-    DBG_PRINTF("Processed %d bytes, state = %d (%s), return %d\n", (int)length, cnx->cnx_state,
+    DBG_PRINTF("Processed %d bytes, state = %d (%s), return %d\n\n", (int)length, cnx->cnx_state,
         picoquic_log_state_name(cnx->cnx_state), ret);
+    DBG_FLUSH();
 }
 
 void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64, 
