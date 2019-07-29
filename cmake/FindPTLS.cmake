@@ -6,7 +6,7 @@ find_path(PTLS_INCLUDE_DIR
           ${CMAKE_BINARY_DIR}/../picotls/include
           ../picotls/include/ )
 
-set(PTLS_HINTS ${CMAKE_BINARY_DIR}/../picotls ../picotls)
+set(PTLS_HINTS ${CMAKE_CURRENT_SOURCE_DIR}/../picotls/build ../picotls)
 
 find_library(PTLS_CORE_LIBRARY picotls-core HINTS ${PTLS_HINTS})
 find_library(PTLS_MINICRYPTO_LIBRARY picotls-minicrypto HINTS ${PTLS_HINTS})

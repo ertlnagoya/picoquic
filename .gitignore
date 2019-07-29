@@ -20,3 +20,5 @@ Release
 */*.xbf
 */*.ilk
 *.b
+/build/*
+.DS_Store

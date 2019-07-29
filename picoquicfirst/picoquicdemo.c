@@ -88,8 +88,8 @@
 #define WSA_LAST_ERROR(x) ((long)(x))
 #endif
 
-#define SERVER_CERT_FILE "certs/cert.pem"
-#define SERVER_KEY_FILE "certs/key.pem"
+#define SERVER_CERT_FILE "../certs/cert.pem"
+#define SERVER_KEY_FILE "../certs/key.pem"
 
 #endif
 
@@ -367,12 +367,12 @@ static const picoquic_demo_stream_desc_t test_scenario[] = {
     { 0, PICOQUIC_DEMO_STREAM_ID_INITIAL, "123.txt", "123.txt", 0 }
 #else
     { 0, PICOQUIC_DEMO_STREAM_ID_INITIAL, "index.html", "index.html", 0 },
-    { 4, 0, "test.html", "test.html", 0 },
-    { 8, 0, "1234567", "doc-1234567.html", 0 },
-    { 12, 0, "main.jpg", "main.jpg", 1 },
-    { 16, 0, "war-and-peace.txt", "war-and-peace.txt", 0 },
-    { 20, 0, "en/latest/", "slash_en_slash_latest.html", 0 },
-    { 24, 0, "/file-123K", "file-123k.txt", 0 }
+    // { 4, 0, "test.html", "test.html", 0 },
+    // { 8, 0, "1234567", "doc-1234567.html", 0 },
+    // { 12, 0, "main.jpg", "main.jpg", 1 },
+    // { 16, 0, "war-and-peace.txt", "war-and-peace.txt", 0 },
+    // { 20, 0, "en/latest/", "slash_en_slash_latest.html", 0 },
+    // { 24, 0, "/file-123K", "file-123k.txt", 0 }
 #endif
 #endif
 };
