@@ -2921,11 +2921,15 @@ int set_certificate_and_key_test()
         if (ret == 0) {
             BIO* bio_key = BIO_new_file(test_server_key_file, "rb");
             /* Load key and convert to DER */
+            int i = 0;
             EVP_PKEY* key = PEM_read_bio_PrivateKey(bio_key, NULL, NULL, NULL);
-            int length = 0;//i2d_PrivateKey(key, NULL);
+            int length = key->pkey_sz;//i2d_PrivateKey(key, NULL);
             unsigned char* key_der = (unsigned char*)malloc(length);
             unsigned char* tmp = key_der;
             //i2d_PrivateKey(key, &tmp);
+            for(i = 0; i < length; i++){
+                tmp[i] = ((unsigned char*)key->pkey.ptr)[i];                
+            }
             EVP_PKEY_free(key);
             BIO_free(bio_key);
 
@@ -2938,7 +2942,8 @@ int set_certificate_and_key_test()
             BIO* bio_key = BIO_new_file(test_server_cert_file, "rb");
             /* Load cert and convert to DER */
             X509* cert = PEM_read_bio_X509(bio_key, NULL, NULL, NULL);
-            int length = i2d_X509(cert, NULL);
+            int length = 0;//i2d_X509(cert, NULL);
+            wolfSSL_X509_get_der(cert, &length);
             unsigned char* cert_der = (unsigned char*)malloc(length);
             unsigned char* tmp = cert_der;
             i2d_X509(cert, &tmp);
@@ -2959,7 +2964,8 @@ int set_certificate_and_key_test()
             BIO* bio_key = BIO_new_file(test_server_cert_store_file, "rb");
             /* Load cert and convert to DER */
             X509* cert = PEM_read_bio_X509(bio_key, NULL, NULL, NULL);
-            int length = i2d_X509(cert, NULL);
+            int length = 0;//i2d_X509(cert, NULL);
+            wolfSSL_X509_get_der(cert, &length);
             unsigned char* cert_der = (unsigned char*)malloc(length);
             unsigned char* tmp = cert_der;
             i2d_X509(cert, &tmp);
@@ -5363,7 +5369,7 @@ int padding_test()
 #ifdef _WINDOWS
 #define PACKET_TRACE_TEST_REF "picoquictest\\packet_trace_ref.txt"
 #else
-#define PACKET_TRACE_TEST_REF "picoquictest/packet_trace_ref.txt"
+#define PACKET_TRACE_TEST_REF "../picoquictest/packet_trace_ref.txt"
 #endif
 
 int packet_trace_test()

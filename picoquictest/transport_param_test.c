@@ -865,7 +865,7 @@ static char const* log_tp_fuzz_file = "log_tp_fuzz_test.txt";
 #ifdef _WINDOWS
 #define LOG_TP_TEST_REF "picoquictest\\log_tp_test_ref.txt"
 #else
-#define LOG_TP_TEST_REF "picoquictest/log_tp_test_ref.txt"
+#define LOG_TP_TEST_REF "../picoquictest/log_tp_test_ref.txt"
 #endif
 
 void picoquic_log_transport_extension_content(FILE* F, int log_cnxid, uint64_t cnx_id_64,

@@ -40,10 +40,14 @@ extern "C" {
 #define PICOQUIC_TEST_FILE_SERVER_KEY "certs\\key.pem"
 #define PICOQUIC_TEST_FILE_CERT_STORE "certs\\test-ca.crt"
 #else
-#define PICOQUIC_TEST_FILE_SERVER_CERT "certs/cert.pem"
-#define PICOQUIC_TEST_FILE_SERVER_BAD_CERT "certs/badcert.pem"
-#define PICOQUIC_TEST_FILE_SERVER_KEY "certs/key.pem"
-#define PICOQUIC_TEST_FILE_CERT_STORE "certs/test-ca.crt"
+// #define PICOQUIC_TEST_FILE_SERVER_CERT "../certs/cert.pem"
+ #define PICOQUIC_TEST_FILE_SERVER_BAD_CERT "../certs/badcert.pem"
+// #define PICOQUIC_TEST_FILE_SERVER_KEY "../certs/key.pem"
+// #define PICOQUIC_TEST_FILE_CERT_STORE "../certs/test-ca.crt"
+
+#define PICOQUIC_TEST_FILE_SERVER_CERT "../certs/server-ecc.pem"
+#define PICOQUIC_TEST_FILE_SERVER_KEY "../certs/ecc-key.pem"
+#define PICOQUIC_TEST_FILE_CERT_STORE "../certs/ca-ecc-cert.pem"
 #endif
 
  /* To set the solution directory for tests */

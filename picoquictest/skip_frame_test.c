@@ -476,7 +476,7 @@ static char const* log_packet_test_file = "log_fuzz_test.txt";
 #ifdef _WINDOWS
 #define LOG_TEST_REF "picoquictest\\log_test_ref.txt"
 #else
-#define LOG_TEST_REF "picoquictest/log_test_ref.txt"
+#define LOG_TEST_REF "../picoquictest/log_test_ref.txt"
 #endif
 
 static int compare_lines(char const* b1, char const* b2)

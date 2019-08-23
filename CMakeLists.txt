@@ -52,8 +52,8 @@ set(PICOQUIC_TEST_LIBRARY_FILES
     picoquictest/parseheadertest.c
     picoquictest/pn2pn64test.c
     picoquictest/sacktest.c
-    picoquictest/skip_frame_test.c
     picoquictest/sim_link.c
+    picoquictest/skip_frame_test.c
     picoquictest/socket_test.c
     picoquictest/splay_test.c
     picoquictest/stream0_frame_test.c
