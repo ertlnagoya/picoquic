@@ -35,7 +35,6 @@
 #include "wolfssl/openssl/pem.h"
 #include "wolfssl/openssl/err.h"
 #include "wolfssl/openssl/engine.h"
-#define X509_FILETYPE_PEM 8
 
 #include <stdio.h>
 #include <string.h>
@@ -981,7 +980,7 @@ void picoquic_crypto_context_free(picoquic_crypto_context_t * ctx)
 
 /* Definition of supported key exchange algorithms */
 
-ptls_key_exchange_algorithm_t *picoquic_key_exchanges[] = { &ptls_minicrypto_secp256r1, &ptls_minicrypto_x25519, NULL };
+ptls_key_exchange_algorithm_t *picoquic_key_exchanges[] = { &ptls_wolfcrypt_x25519, &ptls_wolfcrypt_secp256r1, NULL };
 ptls_cipher_suite_t *picoquic_cipher_suites[] = { 
     &ptls_wolfcrypt_aes256gcmsha384, &ptls_wolfcrypt_aes128gcmsha256,
     &ptls_minicrypto_chacha20poly1305sha256, NULL };
@@ -2127,7 +2126,7 @@ int picoquic_cid_get_under_mask_ctx(void ** v_cid_enc, const void *secret)
 {
     uint8_t cidkey[PTLS_MAX_SECRET_SIZE];
     uint8_t long_secret[PTLS_MAX_DIGEST_SIZE];
-    ptls_cipher_suite_t cipher = { 0, &ptls_wolfcrypt_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_wolfcrypt_aes128gcm, &ptls_wolfcrypt_sha256 };
     int ret;
 
     picoquic_cid_free_under_mask_ctx(*v_cid_enc);
