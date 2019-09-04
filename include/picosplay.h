@@ -59,7 +59,7 @@ void picosplay_delete_hint(picosplay_tree *tree, picosplay_node *node);
 void picosplay_empty_tree(picosplay_tree *tree);
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif
 
 #endif /* PICOSPLAY_H */
