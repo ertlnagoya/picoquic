@@ -230,10 +230,17 @@ int picoquic_get_ticket(picoquic_stored_ticket_t* p_first_ticket,
     char const* sni, uint16_t sni_length, char const* alpn, uint16_t alpn_length,
     uint8_t** ticket, uint16_t* ticket_length, int mark_used);
 
+#ifndef NO_FILESYSTEM
 int picoquic_save_tickets(const picoquic_stored_ticket_t* first_ticket,
     uint64_t current_time, char const* ticket_file_name);
 int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
     uint64_t current_time, char const* ticket_file_name);
+#endif
+int picoquic_save_tickets_buffer(const picoquic_stored_ticket_t* first_ticket,
+    uint64_t current_time, q_stored_ticket_t* ticket_name);
+int picoquic_load_tickets_buffer(picoquic_stored_ticket_t** pp_first_ticket,
+    uint64_t current_time, q_stored_ticket_t* ticket_name);
+
 void picoquic_free_tickets(picoquic_stored_ticket_t** pp_first_ticket);
 
 typedef struct st_picoquic_stored_token_t {

@@ -242,7 +242,7 @@ int picoquic_get_ticket(picoquic_stored_ticket_t* p_first_ticket,
     return ret;
 }
 
-#ifdef ENABLE_FILESYSTEM
+#ifndef NO_FILESYSTEM
 int picoquic_save_tickets(const picoquic_stored_ticket_t* first_ticket,
     uint64_t current_time,
     char const* ticket_file_name)
@@ -364,22 +364,102 @@ int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
 
     return ret;
 }
+#endif /* NO_FILESYSTEM */
 
-#else /* ENABLE_FILESYSTEM */
-
-int picoquic_save_tickets(const picoquic_stored_ticket_t* first_ticket,
-    uint64_t current_time,
-    char const* ticket_file_name)
+int picoquic_save_tickets_buffer(const picoquic_stored_ticket_t* first_ticket,
+    uint64_t current_time, q_stored_ticket_t* ticket_name)
 {
-    return PICOQUIC_ERROR_INVALID_FILE;
+    int ret = 0;
+    int all_record = 0;
+    const picoquic_stored_ticket_t* next = first_ticket;
+    memset(ticket_name->ticket, 0, 2048);
+    ticket_name->stored = 0;
+
+    while (ret == 0 && next != NULL) {
+        /* Only store the tickets that are valid going forward */
+        if (next->time_valid_until > current_time && next->was_used == 0) {
+            /* Compute the serialized size */
+            uint8_t buffer[2048];
+            size_t record_size;
+
+            ret = picoquic_serialize_ticket(next, buffer, sizeof(buffer), &record_size);
+
+            if (ret == 0) {
+                memcpy(ticket_name->ticket+all_record, &record_size, 4);
+                all_record += 4;
+                memcpy(ticket_name->ticket+all_record, buffer, record_size);
+                all_record += record_size;
+            }
+        }
+        next = next->next_ticket;
+    }
+    ticket_name->ticket[all_record] = '\n';
+    ticket_name->stored = 1;
+
+    return ret;
 }
 
-int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
-    uint64_t current_time, char const* ticket_file_name)
+int picoquic_load_tickets_buffer(picoquic_stored_ticket_t** pp_first_ticket,
+    uint64_t current_time, q_stored_ticket_t* ticket_name)
 {
-    return PICOQUIC_ERROR_NO_SUCH_FILE;
+    int ret = 0;
+    picoquic_stored_ticket_t* previous = NULL;
+    picoquic_stored_ticket_t* next;
+    uint32_t record_size;
+    uint32_t storage_size;
+    int all_record = 0;
+
+    if(ticket_name->stored == 0){
+        ret = PICOQUIC_ERROR_NO_SUCH_FILE;
+    }
+
+    while (ret == 0) {
+        if (ticket_name->ticket[all_record] == '\n') {
+            /* end of file */
+            break;
+        }
+        else {
+            memcpy(&storage_size, ticket_name->ticket + all_record, 4);
+            all_record += 4;
+            record_size = storage_size + offsetof(struct st_picoquic_stored_ticket_t, time_valid_until);
+           
+            if (record_size > 2048) {
+                ret = PICOQUIC_ERROR_INVALID_FILE;
+                break;
+            }
+            else {
+                size_t consumed = 0;
+                ret = picoquic_deserialize_ticket(&next, ticket_name->ticket + all_record, storage_size, &consumed);
+                all_record += storage_size;
+
+                if (ret == 0 && (consumed != storage_size || next == NULL)) {
+                    ret = PICOQUIC_ERROR_INVALID_FILE;
+                }
+
+                if (ret == 0 && next != NULL) {
+                    if (next->time_valid_until < current_time) {
+                        free(next);
+                    }
+                    else {
+                        next->sni = ((char*)next) + sizeof(picoquic_stored_ticket_t);
+                        next->alpn = next->sni + next->sni_length + 1;
+                        next->ticket = (uint8_t*)(next->alpn + next->alpn_length + 1);
+                        next->next_ticket = NULL;
+                        if (previous == NULL) {
+                            *pp_first_ticket = next;
+                        }
+                        else {
+                            previous->next_ticket = next;
+                        }
+
+                        previous = next;
+                    }
+                }
+            }
+        }
+    }
+    return ret;
 }
-#endif
 
 void picoquic_free_tickets(picoquic_stored_ticket_t** pp_first_ticket)
 {

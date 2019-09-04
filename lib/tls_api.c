@@ -1085,7 +1085,23 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
             if (cert_root_file_name != NULL)
             {
                 store = X509_STORE_new();
-
+#ifdef NO_FILESYSTEM
+                if (SSL_CA_ECC_PEM){
+                    if (store != NULL){
+                        X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
+                        X509* x509 = NULL;
+                        int ca_ret = 0;
+                        x509 = wolfSSL_X509_load_certificate_buffer(SSL_CA_ECC_PEM, sizeof(SSL_CA_ECC_PEM), SSL_FILETYPE_PEM);
+                        if(x509 == NULL){
+                            ret = MEMORY_ERROR;
+                        }
+                        if((ca_ret = X509_STORE_add_cert(lookup->store, x509)) != 1){
+                            DBG_PRINTF("Cannot load X509 store (%s), ret = %d\n", SSL_CA_ECC_PEM, ca_ret);   
+                        }
+                        X509_free(x509);
+                    }
+                } else 
+#endif
                 if (store != NULL) {
                     int file_ret = 0;
                     X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
@@ -1094,21 +1110,6 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
                             cert_root_file_name, ret);
                     }
                 }
-#ifdef NO_CERTFILE
-            } else if (SSL_CA_ECC_PEM){
-                store = X509_STORE_new();
-                X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
-                X509* x509 = NULL;
-                int ca_ret = 0;
-                x509 = wolfSSL_X509_load_certificate_buffer(SSL_CA_ECC_PEM, sizeof(SSL_CA_ECC_PEM), SSL_FILETYPE_PEM);
-                if(x509 == NULL){
-                    ret = MEMORY_ERROR;
-                }
-                if((ca_ret = X509_STORE_add_cert(lookup->store, x509)) != 1){
-                    DBG_PRINTF("Cannot load X509 store (%s), ret = %d\n", SSL_CA_ECC_PEM, ca_ret);   
-                }
-                X509_free(x509);
-#endif
             }
 
             ptls_openssl_init_verify_certificate(verifier, store);
