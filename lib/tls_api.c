@@ -152,7 +152,11 @@ static int set_sign_certificate_from_key(EVP_PKEY* pkey, ptls_context_t* ctx)
 static int set_sign_certificate_from_key_file(char const* keypem, ptls_context_t* ctx)
 {
     int ret = 0;
+#ifdef NO_FILESYSTEM
+    BIO *bio = BIO_new_mem_buf(ECDSA_PRIVATE_KEY, (int)strlen(ECDSA_PRIVATE_KEY));    
+#else
     BIO* bio = BIO_new_file(keypem, "rb");
+#endif
     EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
     if (pkey == NULL) {
         DBG_PRINTF("%s", "failed to load private key");
@@ -1035,8 +1039,12 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
 
         if (cert_file_name != NULL && key_file_name != NULL) {
             /* Read the certificate file */
+        #ifdef NO_FILESYSTEM
+            if (wolfcrypt_load_certificates(ctx) != 0){
+        #else
             if (ptls_load_certificates(ctx, (char*)cert_file_name) != 0) {
                 ret = -1;
+        #endif
             } else {
                 ret = set_sign_certificate_from_key_file(key_file_name, ctx);
             }
@@ -1091,7 +1099,11 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
                         X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
                         X509* x509 = NULL;
                         int ca_ret = 0;
+                        #ifdef TEST_BAD_CERT
+                        x509 = wolfSSL_X509_load_certificate_buffer(BAD_CA, sizeof(BAD_CA), SSL_FILETYPE_PEM);
+                        #else
                         x509 = wolfSSL_X509_load_certificate_buffer(SSL_CA_ECC_PEM, sizeof(SSL_CA_ECC_PEM), SSL_FILETYPE_PEM);
+                        #endif
                         if(x509 == NULL){
                             ret = MEMORY_ERROR;
                         }
