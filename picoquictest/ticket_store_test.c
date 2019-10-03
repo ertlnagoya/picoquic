@@ -78,7 +78,9 @@ static int ticket_store_compare(picoquic_stored_ticket_t* s1, picoquic_stored_ti
     return ret;
 }
 
-int ticket_store_test()
+static q_stored_ticket_t test_ticket = {{0}, 0};
+
+int ticket_store_buffer_test()
 {
     int ret = 0;
     picoquic_stored_ticket_t* p_first_ticket = NULL;
@@ -94,11 +96,11 @@ int ticket_store_test()
     uint8_t ticket[128];
 
     /* Writing an empty file */
-    ret = picoquic_save_tickets(p_first_ticket, current_time, test_ticket_file_name);
+    ret = picoquic_save_tickets_buffer(p_first_ticket, current_time, &test_ticket);
 
     /* Load the empty file again */
     if (ret == 0) {
-        ret = picoquic_load_tickets(&p_first_ticket_empty, retrieve_time, test_ticket_file_name);
+        ret = picoquic_load_tickets_buffer(&p_first_ticket_empty, retrieve_time, &test_ticket);
 
         /* Verify that the content is empty */
         if (p_first_ticket_empty != NULL) {
@@ -148,11 +150,11 @@ int ticket_store_test()
     }
     /* Store them on a file */
     if (ret == 0) {
-        ret = picoquic_save_tickets(p_first_ticket, current_time, test_ticket_file_name);
+        ret = picoquic_save_tickets_buffer(p_first_ticket, current_time, &test_ticket);
     }
     /* Load the file again */
     if (ret == 0) {
-        ret = picoquic_load_tickets(&p_first_ticket_bis, retrieve_time, test_ticket_file_name);
+        ret = picoquic_load_tickets_buffer(&p_first_ticket_bis, retrieve_time, &test_ticket);
     }
 
     /* Verify that the two contents match */
@@ -162,7 +164,7 @@ int ticket_store_test()
 
     /* Reload after a long time */
     if (ret == 0) {
-        ret = picoquic_load_tickets(&p_first_ticket_ter, too_late_time, test_ticket_file_name);
+        ret = picoquic_load_tickets_buffer(&p_first_ticket_ter, too_late_time, &test_ticket);
 
         if (ret == 0 && p_first_ticket_ter != NULL) {
             ret = -1;

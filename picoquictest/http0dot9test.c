@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "util.h"
 
 int http0dot9_get(uint8_t* command, size_t command_length,
     uint8_t* response, size_t response_max, size_t* response_length);
@@ -23,23 +24,24 @@ int http0dot9_test_one(char const* command, int expected_ret, size_t expected_le
         if (c_ret != expected_ret || content_length != expected_length) {
             ret = -1;
         } else if (c_ret == 0 && fileName != 0) {
-            FILE* F = NULL;
-#ifdef _WINDOWS
-            errno_t err = fopen_s(&F, fileName, "w");
-            if (err != 0 || F == NULL) {
-                ret = -1;
-            }
-#else
-            F = fopen(fileName, "w");
-            if (F == NULL) {
-                ret = -1;
-            }
-#endif
+//             FILE* F = NULL;
+// #ifdef _WINDOWS
+//             errno_t err = fopen_s(&F, fileName, "w");
+//             if (err != 0 || F == NULL) {
+//                 ret = -1;
+//             }
+// #else
+//             F = fopen(fileName, "w");
+//             if (F == NULL) {
+//                 ret = -1;
+//             }
+// #endif
 
             if (ret == 0) {
-                (void)fwrite(big_buffer, 1, content_length, F);
+                //(void)fwrite(big_buffer, 1, content_length, F);
+                //DBG_PRINTF("%s\n", big_buffer);
 
-                fclose(F);
+                //fclose(F);
             }
         }
         free(big_buffer);

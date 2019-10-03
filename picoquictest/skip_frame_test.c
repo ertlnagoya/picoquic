@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <t_syslog.h>
+
 /*
  * Test of the skip frame API.
  * This test is only defined for the varint encodings -- the older fixed int
@@ -467,7 +469,7 @@ int parse_frame_test()
     return ret;
 }
 
-void picoquic_log_frames(FILE* F, uint64_t cnx_id64, uint8_t* bytes, size_t length);
+void picoquic_log_frames(uint64_t cnx_id64, uint8_t* bytes, size_t length);
 
 static char const* log_test_file = "log_test.txt";
 static char const* log_fuzz_test_file = "log_fuzz_test.txt";
@@ -616,7 +618,7 @@ int logger_test()
     }
     else {
         for (size_t i = 0; i < nb_test_skip_list; i++) {
-            picoquic_log_frames(F, 0, test_skip_list[i].val, test_skip_list[i].len);
+            picoquic_log_frames(0, test_skip_list[i].val, test_skip_list[i].len);
         }
         picoquic_log_picotls_ticket(F, logger_test_cid,
             log_test_ticket, (uint16_t) sizeof(log_test_ticket));
@@ -658,8 +660,8 @@ int logger_test()
             break;
         }
         else {
-            ret &= fprintf(F, "Log packet test #%d\n", (int)i);
-            picoquic_log_frames(F, 0, buffer, bytes_max);
+            syslog(LOG_NOTICE, "Log packet test #%d\n", (int)i);
+            picoquic_log_frames(0, buffer, bytes_max);
             fclose(F);
             F = NULL;
         }
@@ -715,15 +717,15 @@ int logger_test()
             break;
         }
 #endif
-        ret &= fprintf(F, "Log fuzz test #%d\n", (int)i);
-        picoquic_log_frames(F, 0, buffer, bytes_max);
+        syslog(LOG_NOTICE, "Log fuzz test #%d\n", (int)i);
+        picoquic_log_frames(0, buffer, bytes_max);
 
         /* Attempt to log fuzzed packets, and hope nothing crashes */
         for (size_t j = 0; j < 100; j++) {
-            ret &= fprintf(F, "Log fuzz test #%d, packet %d\n", (int)i, (int)j);
+            syslog(LOG_NOTICE, "Log fuzz test #%d, packet %d\n", (int)i, (int)j);
             fflush(F);
             skip_test_fuzz_packet(fuzz_buffer, buffer, bytes_max, &random_context);
-            picoquic_log_frames(F, 0, fuzz_buffer, bytes_max);
+            picoquic_log_frames(0, fuzz_buffer, bytes_max);
         }
         fclose(F);
         F = NULL;

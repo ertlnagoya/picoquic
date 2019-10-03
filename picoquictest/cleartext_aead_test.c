@@ -28,6 +28,7 @@
 #include "picotls.h"
 #include "picotls/openssl.h"
 #include "picotls/minicrypto.h"
+#include "picotls/wolfcrypt.h"
 #include <string.h>
 #include "picoquictest_internal.h"
 
@@ -318,7 +319,7 @@ int pn_ctr_test()
     uint8_t in_bytes[16];
     uint8_t out_bytes[16];
     uint8_t decoded[16];
-    ptls_aead_algorithm_t* aead = &ptls_openssl_aes128gcm;
+    ptls_aead_algorithm_t* aead = &ptls_wolfcrypt_aes128gcm;
     ptls_cipher_context_t *pn_enc = ptls_cipher_new(aead->ctr_cipher, 1, key);
 
     if (pn_enc == NULL) {
@@ -902,7 +903,7 @@ int draft17_vector_test()
     uint8_t master_secret[256];
     uint8_t client_secret[256];
     uint8_t server_secret[256];
-    ptls_cipher_suite_t cipher = { 0, &ptls_openssl_aes128gcm, &ptls_openssl_sha256 };
+    ptls_cipher_suite_t cipher = { 0, &ptls_wolfcrypt_aes128gcm, &ptls_wolfcrypt_sha256 };
 
     /* Check the label expansions */
     ret = draft17_label_expansion_test(&cipher, PICOQUIC_LABEL_KEY, PICOQUIC_LABEL_QUIC_KEY_BASE,
@@ -1044,7 +1045,7 @@ static const uint8_t key_rotation_test_target_poly[] = {
     0x8a, 0xba, 0x45, 0xa0, 0x2b, 0xd8, 0x1f, 0x07};
 
 static ptls_cipher_suite_t *key_rotation_test_suites[] = {
-    &ptls_openssl_aes256gcmsha384, &ptls_openssl_aes128gcmsha256,
+    &ptls_wolfcrypt_aes256gcmsha384, &ptls_wolfcrypt_aes128gcmsha256,
     &ptls_minicrypto_chacha20poly1305sha256, NULL };
 
 static const uint8_t * key_rotation_test_target[] = {

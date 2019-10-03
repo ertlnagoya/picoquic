@@ -21,6 +21,7 @@
 
 #include "picosocks.h"
 #include "util.h"
+#include <lwip/sockets.h>
 
 static int socket_ping_pong(SOCKET_TYPE fd, struct sockaddr* server_addr, int server_address_length,
     picoquic_server_sockets_t* server_sockets)
@@ -46,7 +47,7 @@ static int socket_ping_pong(SOCKET_TYPE fd, struct sockaddr* server_addr, int se
     }
 
     /* send from client to sever address */
-    bytes_sent = sendto(fd, (const char*)&message, sizeof(message), 0, server_addr, server_address_length);
+    bytes_sent = lwip_sendto(fd, (const char*)&message, sizeof(message), 0, server_addr, server_address_length);
 
     if (bytes_sent != (int)sizeof(message)) {
         ret = -1;
@@ -123,7 +124,7 @@ static int socket_test_one(char const* addr_text, int server_port, int should_be
         if (is_name != should_be_name) {
             ret = -1;
         } else {
-            fd = socket(server_address.ss_family, SOCK_DGRAM, IPPROTO_UDP);
+            fd = lwip_socket(server_address.ss_family, SOCK_DGRAM, IPPROTO_UDP);
             if (fd == INVALID_SOCKET) {
                 ret = -1;
             } else {
@@ -157,8 +158,8 @@ int socket_test()
         /* For a series of server addresses, do a ping pong test */
         if (socket_test_one("127.0.0.1", test_port, 0, &server_sockets) != 0) {
             ret = -1;
-        } else if (socket_test_one("::1", test_port, 0, &server_sockets) != 0) {
-            ret = -1;
+        // } else if (socket_test_one("::1", test_port, 0, &server_sockets) != 0) {
+        //     ret = -1;
         } else if (socket_test_one("localhost", test_port, 1, &server_sockets) != 0) {
             ret = -1;
         }
@@ -218,9 +219,9 @@ int socket_ecn_test()
 #endif
     ret = socket_ecn_test_one(AF_INET);
 
-    if (ret == 0) {
-        ret = socket_ecn_test_one(AF_INET6);
-    }
+    // if (ret == 0) {
+    //     ret = socket_ecn_test_one(AF_INET6);
+    // }
 
     return ret;
 }

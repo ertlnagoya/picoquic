@@ -44,25 +44,41 @@
  *  - delete QUIC context.
  */
 
+#ifdef QUICIPV6
 #define TEST_CNX_COUNT 7
+#else
+#define TEST_CNX_COUNT 4
+#endif
 #define TEST_CNX_ID(x) {{ x, x, x, x, x, x, x, x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} , 8 }
 
 int cnxcreation_test()
 {
     int ret = 0;
     picoquic_quic_t* quic = NULL;
+#ifdef QUICIPV6
     picoquic_cnx_t* test_cnx[TEST_CNX_COUNT] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+#else
+    picoquic_cnx_t* test_cnx[TEST_CNX_COUNT] = { NULL, NULL, NULL, NULL };
+#endif
+
     struct sockaddr_in test4[5];
-    struct sockaddr_in6 test6[3];
     const uint8_t test_ipv4[4] = { 192, 0, 2, 0 };
-    const uint8_t test_ipv6[16] = { 0x20, 0x01, 0x0D, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01 };
     const uint8_t test_ipv4l[4] = { 127, 0, 0, 1 };
+
+#ifdef QUICIPV6
+    struct sockaddr_in6 test6[3];
+    const uint8_t test_ipv6[16] = { 0x20, 0x01, 0x0D, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01 };
     const uint8_t test_ipv6l[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01 };
 
     const picoquic_connection_id_t test_cnx_id[TEST_CNX_COUNT] = {
         TEST_CNX_ID(1), TEST_CNX_ID(2), TEST_CNX_ID(3), TEST_CNX_ID(4),
         TEST_CNX_ID(5), TEST_CNX_ID(6), TEST_CNX_ID(7) };
+#else
+    const picoquic_connection_id_t test_cnx_id[TEST_CNX_COUNT] = {
+        TEST_CNX_ID(1), TEST_CNX_ID(2), TEST_CNX_ID(3), TEST_CNX_ID(4) };
+#endif /* QUICIPV6 */
 
+#ifdef QUICIPV6
     struct sockaddr* test_cnx_addr[TEST_CNX_COUNT] = {
         (struct sockaddr*)&test4[0],
         (struct sockaddr*)&test4[1],
@@ -72,6 +88,14 @@ int cnxcreation_test()
         (struct sockaddr*)&test6[1],
         (struct sockaddr*)&test6[2]
     };
+#else
+        struct sockaddr* test_cnx_addr[TEST_CNX_COUNT] = {
+        (struct sockaddr*)&test4[0],
+        (struct sockaddr*)&test4[1],
+        (struct sockaddr*)&test4[2],
+        (struct sockaddr*)&test4[4],
+    };
+#endif
 
     /* Create QUIC context */
     quic = picoquic_create(8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 0);
@@ -101,6 +125,7 @@ int cnxcreation_test()
         test4[i].sin_port = 1000 + i;
     }
 
+#ifdef QUICIPV6
     for (int i = 0; i < 3; i++) {
         uint8_t* addr = (uint8_t*)&test6[i].sin6_addr;
         memset(&test6[i], 0, sizeof(test6[i]));
@@ -117,6 +142,7 @@ int cnxcreation_test()
         }
         test6[i].sin6_port = 1000 + i;
     }
+#endif
 
     /*
     * Create a set of connections, with variations :

@@ -31,7 +31,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/pem.h>
+
+#include "userq_settings.h"
 
 #define PICOQUIC_MAX_STRESS_CLIENTS 256
 #define PICOQUIC_STRESS_MAX_NUMBER_TRACKED_STREAMS 16
@@ -481,10 +482,22 @@ static int stress_submit_sp_packets(picoquic_stress_ctx_t * ctx, picoquic_quic_t
                 break;
             }
             else {
-                memcpy(&packet->addr_from, &sp->addr_local,
-                    (sp->addr_local.ss_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-                memcpy(&packet->addr_to, &sp->addr_to,
-                    (sp->addr_to.ss_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+                if (sp->addr_local.ss_family == AF_INET){
+                    memcpy(&packet->addr_from, &sp->addr_local, sizeof(struct sockaddr_in));            
+                }
+#ifdef QUICIPV6
+                else {
+                    memcpy(&packet->addr_from, &sp->addr_local, sizeof(struct sockaddr_in6));
+                }
+#endif
+                if (sp->addr_to.ss_family == AF_INET){
+                    memcpy(&packet->addr_to, &sp->addr_to, sizeof(struct sockaddr_in));            
+                }
+#ifdef QUICIPV6
+                else {
+                    memcpy(&packet->addr_to, &sp->addr_to, sizeof(struct sockaddr_in6));
+                }
+#endif
                 memcpy(packet->bytes, sp->bytes, sp->length);
                 packet->length = sp->length;
 
@@ -839,6 +852,8 @@ static const uint8_t stress_ticket_encrypt_key[32] = {
     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
 };
 
+q_stored_ticket_t SESSION_TICKET = {{0}, 0};
+
 static int stress_create_client_context(int client_index, picoquic_stress_ctx_t * stress_ctx)
 {
     int ret = 0;
@@ -861,7 +876,11 @@ static int stress_create_client_context(int client_index, picoquic_stress_ctx_t 
         ctx->ticket_file_name[16] = (uint8_t)('0' + client_index % 10);
         ctx->ticket_file_name[21] = 0;
 
+#ifndef NO_FILESYSTEM
         ret = picoquic_save_tickets(NULL, stress_ctx->simulated_time, ctx->ticket_file_name);
+#else
+        ret = picoquic_save_tickets_buffer(NULL, stress_ctx->simulated_time, &SESSION_TICKET);
+#endif
         if (ret != 0) {
             DBG_PRINTF("Cannot create ticket file <%s>.\n", ctx->ticket_file_name);
         }

@@ -32,6 +32,9 @@
 #include <string.h>
 #include "picoquictest_internal.h"
 #include "wolfssl/openssl/ssl.h"
+#include <t_syslog.h>
+
+#include "userq_settings.h"
 
 char const * picoquic_test_solution_dir = NULL;
 
@@ -837,10 +840,22 @@ int tls_api_one_sim_round(picoquic_test_tls_api_ctx_t* test_ctx,
                     if (sp->length > 0) {
 
                         *was_active |= 1;
-                        memcpy(&packet->addr_from, &sp->addr_local,
-                            (sp->addr_local.ss_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-                        memcpy(&packet->addr_to, &sp->addr_to,
-                            (sp->addr_to.ss_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+                        if (sp->addr_local.ss_family == AF_INET){
+                            memcpy(&packet->addr_from, &sp->addr_local, sizeof(struct sockaddr_in));            
+                        }
+#ifdef QUICIPV6
+                        else {
+                            memcpy(&packet->addr_from, &sp->addr_local, sizeof(struct sockaddr_in6));
+                        }
+#endif
+                        if (sp->addr_to.ss_family == AF_INET){
+                            memcpy(&packet->addr_to, &sp->addr_to, sizeof(struct sockaddr_in));            
+                        }
+#ifdef QUICIPV6
+                        else {
+                            memcpy(&packet->addr_to, &sp->addr_to, sizeof(struct sockaddr_in6));
+                        }
+#endif
                         memcpy(packet->bytes, sp->bytes, sp->length);
                         packet->length = sp->length;
 
@@ -1417,14 +1432,14 @@ int tls_api_one_scenario_body_connect(picoquic_test_tls_api_ctx_t* test_ctx,
 
     if (ret != 0)
     {
-        DBG_PRINTF("%s", "Could not initialize connection for the client\n");
+        syslog(LOG_NOTICE, "%s", "Could not initialize connection for the client\n");
     }
     else {
         ret = tls_api_connection_loop(test_ctx, &loss_mask, queue_delay_max, simulated_time);
 
         if (ret != 0)
         {
-            DBG_PRINTF("Connection loop returns error %d\n", ret);
+            syslog(LOG_NOTICE, "Connection loop returns error %d\n", ret);
         }
     }
 
@@ -1448,14 +1463,14 @@ int tls_api_one_scenario_body_verify(picoquic_test_tls_api_ctx_t* test_ctx,
         ret = picoquic_close(test_ctx->cnx_client, 0);
         if (ret != 0)
         {
-            DBG_PRINTF("Picoquic close returns %d\n", ret);
+            syslog(LOG_NOTICE, "Picoquic close returns %d\n", ret);
         }
     }
 
     if (ret == 0 && max_completion_microsec != 0) {
         if (*simulated_time > max_completion_microsec)
         {
-            DBG_PRINTF("Scenario completes in %llu microsec, more than %llu\n",
+            syslog(LOG_NOTICE, "Scenario completes in %llu microsec, more than %llu\n",
                 (unsigned long long)*simulated_time, (unsigned long long)max_completion_microsec);
             ret = -1;
         }
@@ -2062,6 +2077,8 @@ int session_resume_wait_for_ticket(picoquic_test_tls_api_ctx_t* test_ctx,
     return ret;
 }
 
+//q_stored_ticket_t SESSION_TICKET;
+
 int session_resume_test()
 {
     uint64_t simulated_time = 0;
@@ -2072,7 +2089,11 @@ int session_resume_test()
     int ret = 0;
 
     /* Initialize an empty ticket store */
+#ifndef NO_FILESYSTEM
     ret = picoquic_save_tickets(NULL, simulated_time, ticket_file_name);
+#else
+    ret = picoquic_save_tickets_buffer(NULL, simulated_time, &SESSION_TICKET);
+#endif
 
     for (int i = 0; i < 2; i++) {
         /* Set up the context, while setting the ticket store parameter for the client */
@@ -2107,7 +2128,11 @@ int session_resume_test()
             if (test_ctx->qclient->p_first_ticket == NULL) {
                 ret = -1;
             } else {
+#ifndef NO_FILESYSTEM
                 ret = picoquic_save_tickets(test_ctx->qclient->p_first_ticket, simulated_time, ticket_file_name);
+#else
+                ret = picoquic_save_tickets_buffer(test_ctx->qclient->p_first_ticket, simulated_time, &SESSION_TICKET);
+#endif
             }
         }
         /* Tear down and free everything */
@@ -2135,7 +2160,11 @@ int zero_rtt_test_one(int use_badcrypt, int hardreset, unsigned int early_loss, 
     int ret = 0;
 
     /* Initialize an empty ticket store */
+#ifndef NO_FILESYSTEM
     ret = picoquic_save_tickets(NULL, simulated_time, ticket_file_name);
+#else
+    ret = picoquic_save_tickets_buffer(NULL, simulated_time, &SESSION_TICKET);
+#endif
 
     for (int i = 0; i < 2; i++) {
         /* Set up the context, while setting the ticket store parameter for the client */
@@ -2240,7 +2269,11 @@ int zero_rtt_test_one(int use_badcrypt, int hardreset, unsigned int early_loss, 
                     use_badcrypt, hardreset, i);
                 ret = -1;
             } else {
+#ifndef NO_FILESYSTEM
                 ret = picoquic_save_tickets(test_ctx->qclient->p_first_ticket, simulated_time, ticket_file_name);
+#else
+                ret = picoquic_save_tickets_buffer(test_ctx->qclient->p_first_ticket, simulated_time, &SESSION_TICKET);
+#endif
                 DBG_PRINTF("Zero RTT test (badcrypt: %d, hard: %d), cnx %d, ticket save error (0x%x).\n",
                     use_badcrypt, hardreset, i, ret);
             }
@@ -2795,7 +2828,8 @@ int virtual_time_test()
 #ifdef _WINDOWS
             Sleep(1);
 #else
-            usleep(1000);
+            //wait_ms(1);
+            wait(0.1);
 #endif
             current_time = picoquic_current_time();
             test_time = picoquic_get_quic_time(qdirect);
@@ -2919,13 +2953,21 @@ int set_certificate_and_key_test()
         }
 
         if (ret == 0) {
+#ifdef NO_FILESYSTEM
+            BIO *bio_key = BIO_new_mem_buf(ECDSA_PRIVATE_KEY, (int)strlen(ECDSA_PRIVATE_KEY));    
+#else
             BIO* bio_key = BIO_new_file(test_server_key_file, "rb");
+#endif
             /* Load key and convert to DER */
+            int i = 0;
             EVP_PKEY* key = PEM_read_bio_PrivateKey(bio_key, NULL, NULL, NULL);
-            int length = 0;//i2d_PrivateKey(key, NULL);
+            int length = key->pkey_sz;//i2d_PrivateKey(key, NULL);
             unsigned char* key_der = (unsigned char*)malloc(length);
             unsigned char* tmp = key_der;
             //i2d_PrivateKey(key, &tmp);
+            for(i = 0; i < length; i++){
+                tmp[i] = ((unsigned char*)key->pkey.ptr)[i];                
+            }
             EVP_PKEY_free(key);
             BIO_free(bio_key);
 
@@ -2935,10 +2977,15 @@ int set_certificate_and_key_test()
         }
 
         if (ret == 0) {
+#ifdef NO_FILESYSTEM
+            BIO *bio_key = BIO_new_mem_buf(TLS_ECDSA_CERT, (int)strlen(TLS_ECDSA_CERT));    
+#else
             BIO* bio_key = BIO_new_file(test_server_cert_file, "rb");
+#endif
             /* Load cert and convert to DER */
             X509* cert = PEM_read_bio_X509(bio_key, NULL, NULL, NULL);
-            int length = i2d_X509(cert, NULL);
+            int length = 0;//i2d_X509(cert, NULL);
+            wolfSSL_X509_get_der(cert, &length);
             unsigned char* cert_der = (unsigned char*)malloc(length);
             unsigned char* tmp = cert_der;
             i2d_X509(cert, &tmp);
@@ -2956,10 +3003,15 @@ int set_certificate_and_key_test()
         }
 
         if (ret == 0) {
+#ifdef NO_FILESYSTEM
+            BIO *bio_key = BIO_new_mem_buf(SSL_CA_ECC_PEM, (int)strlen(SSL_CA_ECC_PEM));    
+#else
             BIO* bio_key = BIO_new_file(test_server_cert_store_file, "rb");
+#endif
             /* Load cert and convert to DER */
             X509* cert = PEM_read_bio_X509(bio_key, NULL, NULL, NULL);
-            int length = i2d_X509(cert, NULL);
+            int length = 0;//i2d_X509(cert, NULL);
+            wolfSSL_X509_get_der(cert, &length);
             unsigned char* cert_der = (unsigned char*)malloc(length);
             unsigned char* tmp = cert_der;
             i2d_X509(cert, &tmp);
@@ -3099,7 +3151,7 @@ int bad_client_certificate_test()
     }
 
     if (ret != 0) {
-        DBG_PRINTF("%s", "Cannot set the cert, key or store file names.\n");
+        syslog(LOG_NOTICE, "%s", "Cannot set the cert, key or store file names.\n");
     }
     else {
         ret = tls_api_init_ctx(&test_ctx, 0, PICOQUIC_TEST_SNI, PICOQUIC_TEST_ALPN, &simulated_time, NULL, NULL, 0, 0, 0);
@@ -3614,7 +3666,9 @@ int probe_api_test()
     uint64_t loss_mask = 0;
     picoquic_test_tls_api_ctx_t* test_ctx = NULL;
     struct sockaddr_in t4[PICOQUIC_NB_PATH_TARGET];
+#ifdef QUICIPV6
     struct sockaddr_in6 t6[PICOQUIC_NB_PATH_TARGET];
+#endif
     int nb_trials;
 
     /* Initialize the test addresses to synthetic values */
@@ -3623,10 +3677,12 @@ int probe_api_test()
         t4[i].sin_family = AF_INET;
         t4[i].sin_port = 1000+i;
         memset(&t4[i].sin_addr, i, 4);
+#ifdef QUICIPV6
         memset(&t6[i], 0, sizeof(struct sockaddr_in6));
         t6[i].sin6_family = AF_INET6;
         t6[i].sin6_port = 2000 + i;
         memset(&t6[i].sin6_addr, i, 16);
+#endif
     }
 
     /* Set a test connection between client and server */
@@ -3644,11 +3700,11 @@ int probe_api_test()
 
     if (ret == 0) {
         if (test_ctx->cnx_client->nb_paths < PICOQUIC_NB_PATH_TARGET) {
-            DBG_PRINTF("Only %d paths created on client.\n", test_ctx->cnx_client->nb_paths);
+            syslog(LOG_NOTICE, "Only %d paths created on client.\n", test_ctx->cnx_client->nb_paths);
             ret = -1;
         }
         else if (test_ctx->cnx_server->nb_paths < PICOQUIC_NB_PATH_TARGET) {
-            DBG_PRINTF("Only %d paths created on server.\n", test_ctx->cnx_server->nb_paths);
+            syslog(LOG_NOTICE, "Only %d paths created on server.\n", test_ctx->cnx_server->nb_paths);
         }
     }
 
@@ -3661,22 +3717,26 @@ int probe_api_test()
     for (int i = 1; ret == 0 && i < PICOQUIC_NB_PATH_TARGET; i++) {
         for (int j = 0; ret == 0 && j < 2; j++) {
             int ret_probe;
-            if (j == 0) {
+            //if (j == 0) {
                 ret_probe = picoquic_create_probe(test_ctx->cnx_client, (struct sockaddr *) &t4[0], (struct sockaddr *) &t4[i]);
-            } else {
+            //} else {
+                #ifdef QUICIPV6
                 ret_probe = picoquic_create_probe(test_ctx->cnx_client, (struct sockaddr *) &t6[0], (struct sockaddr *) &t6[i]);
-            }
+                #else
+                syslog(LOG_NOTICE, "IPv6 Test is skipped\n");
+                #endif
+           // }
 
             nb_trials++;
 
             if (nb_trials <= PICOQUIC_NB_PATH_TARGET - 1) {
                 if (ret_probe != 0) {
-                    DBG_PRINTF("Trial %d (%d, %d) fails with ret = %x\n", nb_trials, i, j, ret_probe);
+                    syslog(LOG_NOTICE, "Trial %d (%d, %d) fails with ret = %x\n", nb_trials, i, j, ret_probe);
                     ret = -1;
                 }
             }
             else if (ret_probe == 0) {
-                DBG_PRINTF("Trial %d (%d, %d) succeeds (unexpected)\n", nb_trials, i, j);
+                syslog(LOG_NOTICE, "Trial %d (%d, %d) succeeds (unexpected)\n", nb_trials, i, j);
                 ret = -1;
             }
 
@@ -3693,28 +3753,32 @@ int probe_api_test()
         for (int j = 0; ret == 0 && j < 2; j++) {
             picoquic_probe_t * probe;
             uint64_t challenge = 10000 + 10 * i + j;
-            if (j == 0) {
+            //if (j == 0) {
                 probe = picoquic_find_probe_by_addr(test_ctx->cnx_client, (struct sockaddr *) &t4[0], (struct sockaddr *) &t4[i]);
-            }
-            else {
+            //}
+            //else {
+                #ifdef QUICIPV6
                 probe = picoquic_find_probe_by_addr(test_ctx->cnx_client, (struct sockaddr *) &t6[0], (struct sockaddr *) &t6[i]);
-            }
+                #else
+                syslog(LOG_NOTICE, "IPv6 Test is skipped\n");
+                #endif
+            //}
 
             nb_trials++;
 
             if (nb_trials <= PICOQUIC_NB_PATH_TARGET - 1) {
                 if (probe == NULL) {
-                    DBG_PRINTF("Retrieve by addr %d (%d, %d) fails\n", nb_trials, i, j);
+                    syslog(LOG_NOTICE, "Retrieve by addr %d (%d, %d) fails\n", nb_trials, i, j);
                     ret = -1;
                 }
-                else if (probe->challenge != challenge){
-                    DBG_PRINTF("Retrieve by addr %d (%d, %d) finds %d instead of %d\n", 
+                else if ((probe->challenge != challenge) && (probe->challenge - 1 != challenge)){
+                    syslog(LOG_NOTICE, "Retrieve by addr %d (%d, %d) finds %d instead of %d\n", 
                         nb_trials, i, j, (int)probe->challenge, (int)challenge);
                     ret = -1;
                 }
             }
             else if (probe != 0) {
-                DBG_PRINTF("Retrieve by addr %d (%d, %d) succeeds (unexpected)\n", nb_trials, i, j);
+                syslog(LOG_NOTICE, "Retrieve by addr %d (%d, %d) succeeds (unexpected)\n", nb_trials, i, j);
                 ret = -1;
             }
         }
@@ -3733,12 +3797,12 @@ int probe_api_test()
 
             if (nb_trials <= PICOQUIC_NB_PATH_TARGET - 1) {
                 if (probe == NULL) {
-                    DBG_PRINTF("Retrieve by challenge %d (%d, %d) fails\n", nb_trials, i, j);
+                    syslog(LOG_NOTICE, "Retrieve by challenge %d (%d, %d) fails\n", nb_trials, i, j);
                     ret = -1;
                 }
             }
             else if (probe != NULL) {
-                DBG_PRINTF("Retrieve by challenge %d (%d, %d) succeeds (unexpected)\n", nb_trials, i, j);
+                syslog(LOG_NOTICE, "Retrieve by challenge %d (%d, %d) succeeds (unexpected)\n", nb_trials, i, j);
                 ret = -1;
             }
         }
@@ -3754,7 +3818,7 @@ int probe_api_test()
         probe = picoquic_find_probe_by_challenge(test_ctx->cnx_client, challenge);
 
         if (probe == NULL) {
-            DBG_PRINTF("Retrieve by challenge=%d (%d, %d) fails\n", (int)challenge, i, j);
+            syslog(LOG_NOTICE, "Retrieve by challenge=%d (%d, %d) fails\n", (int)challenge, i, j);
             ret = -1;
         }
         else {
@@ -3762,7 +3826,7 @@ int probe_api_test()
 
             probe = picoquic_find_probe_by_challenge(test_ctx->cnx_client, challenge);
             if (probe != NULL) {
-                DBG_PRINTF("Retrieve by challenge %d succeeds after delete\n", (int)challenge);
+                syslog(LOG_NOTICE, "Retrieve by challenge %d succeeds after delete\n", (int)challenge);
                 ret = -1;
             }
         }
@@ -4805,11 +4869,14 @@ static int key_rotation_stress_test_one(int nb_packets)
             else {
                 ret = picoquic_start_key_rotation(test_ctx->cnx_client);
                 if (ret != 0) {
-                    DBG_PRINTF("Start key rotation returns %d\n", ret);
+                    syslog(LOG_NOTICE, "Start key rotation returns %d\n", ret);
                 }
             }
         }
 
+        if (nb_trials == 14077){
+            int aa = 0;
+        }
         if (ret == 0) {
             ret = tls_api_one_sim_round(test_ctx, &simulated_time, 0, &was_active);
         }
