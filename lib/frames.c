@@ -24,6 +24,7 @@
 #include <string.h>
 #include "picoquic_internal.h"
 #include "tls_api.h"
+#include <t_syslog.h>
 
 /* ****************************************************
  * Frames private declarations
@@ -1412,7 +1413,7 @@ uint8_t* picoquic_decode_crypto_hs_frame(picoquic_cnx_t* cnx, uint8_t* bytes, co
         picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, picoquic_frame_type_crypto_hs);
 
     } else if ((uint64_t)(bytes_max - bytes) < data_length) {
-        DBG_PRINTF("crypto hs data past the end of the packet: data_length=%" PRIst ", remaining_space=%" PRIst, data_length, bytes_max - bytes);
+        DBG_PRINTF("crypto hs data past the end of the packet: data_length=%d, remaining_space=%d", data_length, bytes_max - bytes);
         picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, picoquic_frame_type_crypto_hs);
         bytes = NULL;
 
@@ -1552,7 +1553,7 @@ int picoquic_parse_ack_header(uint8_t const* bytes, size_t bytes_max,
     }
 
     if (l_largest == 0 || l_delay == 0 || l_blocks == 0 || bytes_max < byte_index) {
-        DBG_PRINTF("ack frame fixed header too large: first_byte=0x%02x, bytes_max=%" PRIst,
+        syslog(LOG_ERROR, "ack frame fixed header too large: first_byte=0x%02x, bytes_max=%x",
             bytes[0], bytes_max);
         byte_index = bytes_max;
         ret = -1;

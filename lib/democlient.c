@@ -149,7 +149,7 @@ static int picoquic_demo_client_open_stream(picoquic_cnx_t* cnx,
         malloc(sizeof(picoquic_demo_client_stream_ctx_t));
 
     if (stream_ctx == NULL) {
-		DBG_PRINTF("Memory Error, cannot create stream context %d\n", (int)stream_id);
+		syslog(LOG_ERROR, "Memory Error, cannot create stream context %d\n", (int)stream_id);
         ret = -1;
     }
     else {
