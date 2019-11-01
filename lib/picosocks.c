@@ -27,6 +27,7 @@
 #include "lwip/sockets.h"
 #include "lwip/def.h"
 #include "lwip/netdb.h"
+#include <t_syslog.h>
 #endif
 
 static int bind_to_port(SOCKET_TYPE fd, int af, int port)
@@ -114,7 +115,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             /* Request setting ECN_1 in outgoing packets */
             ret = setsockopt(sd, IPPROTO_IPV6, IPV6_TCLASS, (char *)&ecn, sizeof(ecn));
             if (ret < 0) {
-                DBG_PRINTF("setsockopt IPV6_TCLASS (0x%x) fails, errno: %d\n", ecn, GetLastError());
+                syslog(LOG_ERROR, "setsockopt IPV6_TCLASS (0x%x) fails, errno: %d\n", ecn, GetLastError());
                 ret = -1;
                 *send_set = 0;
             }
@@ -132,7 +133,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             /* Request receiving TOS reports in recvmsg */
             ret = setsockopt(sd, IPPROTO_IPV6, IPV6_ECN, (char *)&set, sizeof(set));
             if (ret < 0) {
-                DBG_PRINTF("setsockopt IPV6_ECN (0x%x) fails, errno: %d\n", set, GetLastError());
+                syslog(LOG_ERROR, "setsockopt IPV6_ECN (0x%x) fails, errno: %d\n", set, GetLastError());
                 ret = -1;
                 *recv_set = 0;
             }
@@ -161,7 +162,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             /* Request setting ECN_1 in outgoing packets */
             ret = setsockopt(sd, IPPROTO_IP, IP_TOS, (char *)&ecn, sizeof(ecn));
             if (ret < 0) {
-                DBG_PRINTF("setsockopt IP_TOS (0x%x) fails, errno: %d\n", ecn, GetLastError());
+                syslog(LOG_ERROR, "setsockopt IP_TOS (0x%x) fails, errno: %d\n", ecn, GetLastError());
                 ret = -1;
                 *send_set = 0;
             }
@@ -179,7 +180,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             /* Request receiving ECN reports in recvmsg */
             ret = setsockopt(sd, IPPROTO_IPV6, IP_ECN, (char *)&set, sizeof(set));
             if (ret < 0) {
-                DBG_PRINTF("setsockopt IP_ECN (0x%x) fails, errno: %d\n", set, GetLastError());
+                syslog(LOG_ERROR, "setsockopt IP_ECN (0x%x) fails, errno: %d\n", set, GetLastError());
                 ret = -1;
                 *recv_set = 0;
             }
@@ -195,7 +196,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             /* Request receiving TOS reports in recvmsg */
             ret = setsockopt(sd, IPPROTO_IPV6, IPV6_RECVTCLASS, (char *)&set, sizeof(set));
             if (ret < 0) {
-                DBG_PRINTF("setsockopt IP_RECVTCLASS (0x%x) fails, errno: %d\n", set, GetLastError());
+                syslog(LOG_ERROR, "setsockopt IP_RECVTCLASS (0x%x) fails, errno: %d\n", set, GetLastError());
                 ret = -1;
                 *recv_set = 0;
             }
@@ -216,7 +217,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             unsigned int ecn = 2; /* ECN_ECT_0 */
             /* Request setting ECN_1 in outgoing packets */
             if (setsockopt(sd, IPPROTO_IPV6, IPV6_TCLASS, &ecn, sizeof(ecn)) < 0) {
-                DBG_PRINTF("setsockopt IPV6_TCLASS (0x%x) fails, errno: %d\n", ecn, errno);
+                syslog(LOG_ERROR, "setsockopt IPV6_TCLASS (0x%x) fails, errno: %d\n", ecn, errno);
                 *send_set = 0;
             }
             else {
@@ -224,7 +225,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             }
         }
 #else
-        DBG_PRINTF("%s", "IPV6_TCLASS is not defined\n");
+        syslog(LOG_ERROR, "%s", "IPV6_TCLASS is not defined\n");
         *send_set = 0;
 #endif
 #ifdef IPV6_RECVTCLASS
@@ -233,7 +234,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
 
             /* Request receiving TOS reports in recvmsg */
             if (setsockopt(sd, IPPROTO_IPV6, IPV6_RECVTCLASS, &set, sizeof(set)) < 0) {
-                DBG_PRINTF("setsockopt IPv6 IPV6_RECVTCLASS (0x%x) fails, errno: %d\n", set, errno);
+                syslog(LOG_ERROR, "setsockopt IPv6 IPV6_RECVTCLASS (0x%x) fails, errno: %d\n", set, errno);
                 ret = -1;
                 *recv_set = 0;
             }
@@ -243,7 +244,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             }
         }
 #else
-        DBG_PRINTF("%s", "IPV6_RECVTCLASS is not defined\n");
+        syslog(LOG_ERROR, "%s", "IPV6_RECVTCLASS is not defined\n");
         *recv_set = 0;
 #endif 
 
@@ -254,7 +255,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
             unsigned int ecn = 2;
             /* Request setting ECN_1 in outgoing packets */
             if (lwip_setsockopt(sd, IPPROTO_IP, IP_TOS, &ecn, sizeof(ecn)) < 0) {
-                DBG_PRINTF("setsockopt IPv4 IP_TOS (0x%x) fails, errno: %d\n", ecn, errno);
+                syslog(LOG_ERROR, "setsockopt IPv4 IP_TOS (0x%x) fails, errno: %d\n", ecn, errno);
                 *send_set = 0;
             }
             else {
@@ -272,7 +273,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
 
             /* Request receiving TOS reports in recvmsg */
             if (setsockopt(sd, IPPROTO_IP, IP_RECVTOS, &set, sizeof(set)) < 0) {
-                DBG_PRINTF("setsockopt IPv4 IP_RECVTOS (0x%x) fails, errno: %d\n", set, errno);
+                syslog(LOG_ERROR, "setsockopt IPv4 IP_RECVTOS (0x%x) fails, errno: %d\n", set, errno);
                 ret = -1;
                 *recv_set = 0;
             }
@@ -283,7 +284,7 @@ int picoquic_socket_set_ecn_options(SOCKET_TYPE sd, int af, int * recv_set, int 
         }
 #else
         *recv_set = 0;
-        DBG_PRINTF("%s", "IP_RECVTOS is not defined\n");
+        syslog(LOG_ERROR, "%s", "IP_RECVTOS is not defined\n");
 #endif
     }
 #endif
@@ -297,14 +298,14 @@ SOCKET_TYPE picoquic_open_client_socket(int af)
 
     if (sd != INVALID_SOCKET) {
         if (picoquic_socket_set_pkt_info(sd, af) != 0) {
-            DBG_PRINTF("Cannot set PKTINFO option (af=%d)\n", af);
+            syslog(LOG_ERROR, "Cannot set PKTINFO option (af=%d)\n", af);
         }
     }
     else {
 #ifdef _WINDOWS
         DBG_PRINTF("Cannot open socket(AF=%d), error: %d\n", af, GetLastError());
 #else
-        DBG_PRINTF("Cannot open socket(AF=%d), error: %d\n", af, errno);
+        syslog(LOG_ERROR, "Cannot open socket(AF=%d), error: %d\n", af, errno);
 #endif
     }
 
@@ -391,7 +392,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
 
     if (nResult == SOCKET_ERROR) {
         last_error = WSAGetLastError();
-        DBG_PRINTF("Could not initialize WSARecvMsg) on UDP socket %d= %d!\n",
+        syslog(LOG_ERROR, "Could not initialize WSARecvMsg) on UDP socket %d= %d!\n",
             (int)fd, last_error);
         bytes_recv = -1;
         *from_length = 0;
@@ -411,7 +412,7 @@ int picoquic_recvmsg(SOCKET_TYPE fd,
 
         if (recv_ret != 0) {
             last_error = WSAGetLastError();
-            DBG_PRINTF("Could not receive message (WSARecvMsg) on UDP socket %d = %d!\n",
+            syslog(LOG_ERROR, "Could not receive message (WSARecvMsg) on UDP socket %d = %d!\n",
                 (int)fd, last_error);
             bytes_recv = -1;
             *from_length = 0;
@@ -606,7 +607,7 @@ int picoquic_sendmsg(SOCKET_TYPE fd,
 
     if (ret == SOCKET_ERROR) {
         last_error = WSAGetLastError();
-        DBG_PRINTF("Could not initialize WSARecvMsg) on UDP socket %d= %d!\n",
+        syslog(LOG_ERROR, "Could not initialize WSARecvMsg) on UDP socket %d= %d!\n",
             (int)fd, last_error);
         bytes_sent = -1;
     } else {
@@ -898,7 +899,7 @@ int picoquic_select(SOCKET_TYPE* sockets,
 
     if (ret_select < 0) {
         bytes_recv = -1;
-        DBG_PRINTF("Error: select returns %d\n", ret_select);
+        syslog(LOG_ERROR, "Error: select returns %d\n", ret_select);
     } else if (ret_select > 0) {
         for (int i = 0; i < nb_sockets; i++) {
             if (FD_ISSET(sockets[i], &readfds)) {
@@ -950,7 +951,7 @@ int picoquic_send_through_server_sockets(
 #else
         int last_error = errno;
 #endif
-        DBG_PRINTF("Could not send packet on UDP socket[%d]= %d!\n",
+        syslog(LOG_ERROR, "Could not send packet on UDP socket[%d]= %d!\n",
             socket_index, last_error);
         DBG_PRINTF("Dest address length: %d, family: %d.\n",
             dest_length, addr_dest->sa_family);
@@ -995,7 +996,11 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
         struct addrinfo hints;
 
         memset(&hints, 0, sizeof(hints));
+#ifdef QUICIPV6
         hints.ai_family = AF_UNSPEC;
+#else
+        hints.ai_family = AF_INET;
+#endif
         hints.ai_socktype = SOCK_DGRAM;
         hints.ai_protocol = IPPROTO_UDP;
 
@@ -1027,7 +1032,7 @@ int picoquic_get_server_address(const char* ip_address_text, int server_port,
                 break;
 #endif
             default:
-                DBG_PRINTF("Error getting IPv6 address for %s, family = %d\n",
+                syslog(LOG_ERROR, "Error getting IPv6 address for %s, family = %d\n",
                     ip_address_text, result->ai_family);
                 ret = -1;
                 break;

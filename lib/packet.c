@@ -160,7 +160,7 @@ int picoquic_parse_packet_header(
                                 ph->epoch = 0;
                                 break;
                             default: /* Not a valid packet type */
-                                DBG_PRINTF("Packet type is not recognized: 0x%02x\n", bytes[0]);
+                                syslog(LOG_ERROR, "Packet type is not recognized: 0x%02x\n", bytes[0]);
                                 ph->ptype = picoquic_packet_error;
                                 ph->version_index = -1;
                                 ph->pc = 0;
@@ -169,7 +169,7 @@ int picoquic_parse_packet_header(
                             break;
                         default:
                             /* version is not supported */
-                            DBG_PRINTF("Version (%x) is recognized but encoding not supported\n", ph->vn);
+                            syslog(LOG_ERROR, "Version (%x) is recognized but encoding not supported\n", ph->vn);
                             ph->ptype = picoquic_packet_error;
                             ph->version_index = -1;
                             ph->pc = 0;
@@ -369,7 +369,7 @@ int picoquic_remove_header_protection(picoquic_cnx_t* cnx,
             ph->pnmask = 0xFFFFFFFF00000000ull;
             ph->offset = ph->pn_offset;
 
-            DBG_PRINTF("Invalid packet length, type: %d, epoch: %d, pc: %d, pn-offset: %d, length: %d\n",
+            syslog(LOG_ERROR, "Invalid packet length, type: %d, epoch: %d, pc: %d, pn-offset: %d, length: %d\n",
                 ph->ptype, ph->epoch, ph->pc, (int)ph->pn_offset, (int)length);
         }
         else
@@ -413,7 +413,7 @@ int picoquic_remove_header_protection(picoquic_cnx_t* cnx,
         ph->offset = ph->pn_offset;
         ph->pn64 = 0xFFFFFFFFFFFFFFFFull;
 
-        DBG_PRINTF("PN dec not ready, type: %d, epoch: %d, pc: %d, pn: %d\n",
+        syslog(LOG_ERROR, "PN dec not ready, type: %d, epoch: %d, pc: %d, pn: %d\n",
             ph->ptype, ph->epoch, ph->pc, (int)ph->pn);
 
         ret = -1;
@@ -1689,7 +1689,7 @@ int picoquic_incoming_segment(
                 }
                 else {
                     /* This is an unexpected packet. Log and drop.*/
-                    DBG_PRINTF("Unexpected packet (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                    syslog(LOG_ERROR, "Unexpected packet (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
                         cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int) ph.pn);
                     ret = PICOQUIC_ERROR_DETECTED;
                 }
@@ -1702,7 +1702,7 @@ int picoquic_incoming_segment(
                     if (picoquic_is_connection_id_null(cnx->path[0]->remote_cnxid)) {
                         cnx->path[0]->remote_cnxid = ph.srce_cnx_id;
                     } else if (picoquic_compare_connection_id(&cnx->path[0]->remote_cnxid, &ph.srce_cnx_id) != 0) {
-                        DBG_PRINTF("Error wrong srce cnxid (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                        syslog(LOG_ERROR, "Error wrong srce cnxid (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
                             cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn);
                         ret = PICOQUIC_ERROR_UNEXPECTED_PACKET;
                     }
@@ -1718,7 +1718,7 @@ int picoquic_incoming_segment(
                         }
                     }
                 } else {
-                    DBG_PRINTF("Error detected (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                    syslog(LOG_ERROR, "Error detected (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
                         cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn);
                     ret = PICOQUIC_ERROR_DETECTED;
                 }
@@ -1747,7 +1747,7 @@ int picoquic_incoming_segment(
                 break;
             default:
                 /* Packet type error. Log and ignore */
-                DBG_PRINTF("Unexpected packet type (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
+                syslog(LOG_ERROR, "Unexpected packet type (%d), type: %d, epoch: %d, pc: %d, pn: %d\n",
                     cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int) ph.pn);
                 ret = PICOQUIC_ERROR_DETECTED;
                 break;
@@ -1795,7 +1795,7 @@ int picoquic_incoming_segment(
         ret = -1;
     }
     else if (ret != 0) {
-        DBG_PRINTF("Packet (%d) error, t: %d, e: %d, pc: %d, pn: %d, l: %d, ret : %x\n",
+        syslog(LOG_ERROR, "Packet (%d) error, t: %d, e: %d, pc: %d, pn: %d, l: %d, ret : %x\n",
             (cnx == NULL) ? -1 : cnx->client_mode, ph.ptype, ph.epoch, ph.pc, (int)ph.pn, length, ret);
         ret = -1;
     }

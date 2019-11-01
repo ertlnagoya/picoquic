@@ -230,11 +230,11 @@ picoquic_quic_t* picoquic_create(uint32_t nb_connections,
 
             if (quic->table_cnx_by_id == NULL || quic->table_cnx_by_net == NULL) {
                 ret = -1;
-                DBG_PRINTF("%s", "Cannot initialize hash tables\n");
+                syslog(LOG_ERROR, "%s", "Cannot initialize hash tables\n");
             }
             else if (picoquic_master_tlscontext(quic, cert_file_name, key_file_name, cert_root_file_name, ticket_encryption_key, ticket_encryption_key_length) != 0) {
                 ret = -1;
-                DBG_PRINTF("%s", "Cannot create TLS context \n");
+                syslog(LOG_ERROR, "%s", "Cannot create TLS context \n");
             }
             else {
                 /* the random generator was initialized as part of the TLS context.
@@ -2065,14 +2065,14 @@ int picoquic_connection_error(picoquic_cnx_t* cnx, uint16_t local_error, uint64_
         cnx->local_error = local_error;
         cnx->cnx_state = picoquic_state_disconnecting;
 
-        DBG_PRINTF("Protocol error (%x)", local_error);
+        syslog(LOG_NOTICE, "Protocol error (%x)", local_error);
     } else if (cnx->cnx_state < picoquic_state_server_false_start) {
         if (cnx->cnx_state != picoquic_state_handshake_failure) {
             cnx->local_error = local_error;
         }
         cnx->cnx_state = picoquic_state_handshake_failure;
 
-        DBG_PRINTF("Protocol error %x", local_error);
+        syslog(LOG_NOTICE, "Protocol error %x", local_error);
     }
 
     cnx->offending_frame_type = frame_type;

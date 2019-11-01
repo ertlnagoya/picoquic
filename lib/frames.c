@@ -772,7 +772,7 @@ int picoquic_parse_stream_header(const uint8_t* bytes, size_t bytes_max,
     }
 
     if (bytes_max < byte_index || l_stream == 0 || (off != 0 && l_off == 0)) {
-        DBG_PRINTF("stream frame header too large: first_byte=0x%02x, bytes_max=%" PRIst,
+        syslog(LOG_ERROR, "stream frame header too large: first_byte=0x%02x, bytes_max=0x%x",
             bytes[0], bytes_max);
         *data_length = 0;
         byte_index = bytes_max;
@@ -787,12 +787,12 @@ int picoquic_parse_stream_header(const uint8_t* bytes, size_t bytes_max,
         }
 
         if (l_len == 0 || bytes_max < byte_index) {
-            DBG_PRINTF("stream frame header too large: first_byte=0x%02x, bytes_max=%" PRIst,
+            syslog(LOG_ERROR, "stream frame header too large: first_byte=0x%02x, bytes_max=%x",
                 bytes[0], bytes_max);
             byte_index = bytes_max;
             ret = -1;
         } else if (byte_index + length > bytes_max) {
-            DBG_PRINTF("stream data past the end of the packet: first_byte=0x%02x, data_length=%" PRIst ", max_bytes=%" PRIst,
+            syslog(LOG_ERROR, "stream data past the end of the packet: first_byte=0x%02x, data_length=0x%x, max_bytes=0x%x",
                 bytes[0], *data_length, bytes_max);
             ret = -1;
         }
@@ -1802,7 +1802,7 @@ int picoquic_process_ack_of_ack_frame(
 
             range++;
             if (largest + 1 < range) {
-                DBG_PRINTF("ack range error: largest=%lx%lx, range=%lx%lx",
+                syslog(LOG_ERROR, "ack range error: largest=%lx%lx, range=%lx%lx",
                     (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range);
                 ret = -1;
                 break;
@@ -1834,7 +1834,7 @@ int picoquic_process_ack_of_ack_frame(
             }
 
             if (largest < block_to_block) {
-                DBG_PRINTF("ack gap error: largest=%lx%lx, range=%%lx%lx, gap=%lx%lx",
+                syslog(LOG_ERROR, "ack gap error: largest=%lx%lx, range=%%lx%lx, gap=%lx%lx",
                     (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range,
                     (uint32_t)( (block_to_block -range) >> 32), (uint32_t)(block_to_block - range));
                 ret = -1;
@@ -2090,7 +2090,7 @@ uint8_t* picoquic_decode_ack_frame_maybe_ecn(picoquic_cnx_t* cnx, uint8_t* bytes
             uint64_t block_to_block;
 
             if ((bytes = picoquic_frames_varint_decode(bytes, bytes_max, &range)) == NULL) {
-                DBG_PRINTF("Malformed ACK RANGE, %d blocks remain.\n", (int)num_block);
+                syslog(LOG_ERROR, "Malformed ACK RANGE, %d blocks remain.\n", (int)num_block);
                 picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, first_byte);
                 bytes = NULL;
                 break;
@@ -2098,7 +2098,7 @@ uint8_t* picoquic_decode_ack_frame_maybe_ecn(picoquic_cnx_t* cnx, uint8_t* bytes
 
             range ++;
             if (largest + 1 < range) {
-                DBG_PRINTF("ack range error: largest=%lx%lx, range=%lx%lx",
+                syslog(LOG_ERROR, "ack range error: largest=%lx%lx, range=%lx%lx",
                     (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range);
                 picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, first_byte);
                 bytes = NULL;
@@ -2119,7 +2119,7 @@ uint8_t* picoquic_decode_ack_frame_maybe_ecn(picoquic_cnx_t* cnx, uint8_t* bytes
 
             /* Skip the gap */
             if ((bytes = picoquic_frames_varint_decode(bytes, bytes_max, &block_to_block)) == NULL) {
-                DBG_PRINTF("    Malformed ACK GAP, %d blocks remain.\n", (int)num_block);
+                syslog(LOG_ERROR, "    Malformed ACK GAP, %d blocks remain.\n", (int)num_block);
                 picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, first_byte);
                 bytes = NULL;
                 break;
@@ -2129,7 +2129,7 @@ uint8_t* picoquic_decode_ack_frame_maybe_ecn(picoquic_cnx_t* cnx, uint8_t* bytes
             block_to_block += range;
 
             if (largest < block_to_block) {
-                DBG_PRINTF("ack gap error: largest=%lx%lx, range=%lx%lx, gap=%lx%lx",
+                syslog(LOG_ERROR, "ack gap error: largest=%lx%lx, range=%lx%lx, gap=%lx%lx",
                     (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range,
                     (uint32_t)( (block_to_block - range) >> 32), (uint32_t)(block_to_block - range));
                 picoquic_connection_error(cnx, PICOQUIC_TRANSPORT_FRAME_FORMAT_ERROR, first_byte);

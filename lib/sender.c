@@ -28,6 +28,7 @@
 #include <string.h>
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
+#include <t_syslog.h>
 #endif
 
 /*
@@ -1077,7 +1078,7 @@ int picoquic_retransmit_needed(picoquic_cnx_t* cnx,
                             /*
                              * Max retransmission count was exceeded. Disconnect.
                              */
-                            DBG_PRINTF("%s\n", "Too many retransmits, disconnect");
+                            syslog(LOG_ERROR, "%s\n", "Too many retransmits, disconnect");
                             cnx->cnx_state = picoquic_state_disconnected;
                             if (cnx->callback_fn) {
                                 (void)(cnx->callback_fn)(cnx, 0, NULL, 0, picoquic_callback_close, cnx->callback_ctx);
@@ -1855,14 +1856,14 @@ int picoquic_prepare_packet_server_init(picoquic_cnx_t* cnx, picoquic_path_t * p
 
                     if (path_x->challenge_repeat_count > PICOQUIC_CHALLENGE_REPEAT_MAX) {
                         if (path_x == cnx->path[0]) {
-                            DBG_PRINTF("%s\n", "Too many challenge retransmits, disconnect");
+                            syslog(LOG_ERROR, "%s\n", "Too many challenge retransmits, disconnect");
                             cnx->cnx_state = picoquic_state_disconnected;
                             if (cnx->callback_fn) {
                                 (void)(cnx->callback_fn)(cnx, 0, NULL, 0, picoquic_callback_close, cnx->callback_ctx);
                             }
                         }
                         else {
-                            DBG_PRINTF("%s\n", "Too many challenge retransmits, abandon path");
+                            syslog(LOG_ERROR, "%s\n", "Too many challenge retransmits, abandon path");
                             path_x->challenge_failed = 1;
                         }
                         length = 0;
@@ -2344,14 +2345,14 @@ int picoquic_prepare_packet_ready(picoquic_cnx_t* cnx, picoquic_path_t * path_x,
                     if (path_x->challenge_repeat_count > PICOQUIC_CHALLENGE_REPEAT_MAX) {
                         if (path_x == cnx->path[0]) {
                             /* TODO: consider alt address. Also, consider other available path. */
-                            DBG_PRINTF("%s\n", "Too many challenge retransmits, disconnect");
+                            syslog(LOG_ERROR, "%s\n", "Too many challenge retransmits, disconnect");
                             cnx->cnx_state = picoquic_state_disconnected;
                             if (cnx->callback_fn) {
                                 (void)(cnx->callback_fn)(cnx, 0, NULL, 0, picoquic_callback_close, cnx->callback_ctx);
                             }
                         }
                         else {
-                            DBG_PRINTF("%s\n", "Too many challenge retransmits, abandon path");
+                            syslog(LOG_ERROR, "%s\n", "Too many challenge retransmits, abandon path");
                             path_x->challenge_failed = 1;
                         }
                     }
@@ -2671,11 +2672,11 @@ int picoquic_prepare_segment(picoquic_cnx_t* cnx, picoquic_path_t * path_x, pico
             ret = PICOQUIC_ERROR_DISCONNECTED;
             break;
         case picoquic_state_client_retry_received:
-            DBG_PRINTF("Unexpected connection state: %d\n", cnx->cnx_state);
+            syslog(LOG_ERROR, "Unexpected connection state: %d\n", cnx->cnx_state);
             ret = PICOQUIC_ERROR_UNEXPECTED_STATE;
             break;
         default:
-            DBG_PRINTF("Unexpected connection state: %d\n", cnx->cnx_state);
+            syslog(LOG_ERROR, "Unexpected connection state: %d\n", cnx->cnx_state);
             ret = PICOQUIC_ERROR_UNEXPECTED_STATE;
             break;
         }
