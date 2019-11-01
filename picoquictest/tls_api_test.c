@@ -35,6 +35,7 @@
 #include <t_syslog.h>
 
 #include "userq_settings.h"
+#include "picotls_settings.h"
 
 char const * picoquic_test_solution_dir = NULL;
 

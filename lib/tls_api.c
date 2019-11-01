@@ -36,6 +36,7 @@
 #include "wolfssl/openssl/err.h"
 #include "wolfssl/openssl/engine.h"
 #include "userq_settings.h"
+#include "picotls_settings.h"
 
 #define OPENSSL_NO_ENGINE
 

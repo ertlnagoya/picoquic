@@ -26,6 +26,7 @@
 #include "picoquic.h"
 #include "picotlsapi.h"
 #include "util.h"
+#include <picotls_settings.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -237,9 +238,9 @@ int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
     uint64_t current_time, char const* ticket_file_name);
 #endif
 int picoquic_save_tickets_buffer(const picoquic_stored_ticket_t* first_ticket,
-    uint64_t current_time, q_stored_ticket_t* ticket_name);
+    uint64_t current_time, ptls_session_ticket_t* ticket_name);
 int picoquic_load_tickets_buffer(picoquic_stored_ticket_t** pp_first_ticket,
-    uint64_t current_time, q_stored_ticket_t* ticket_name);
+    uint64_t current_time, ptls_session_ticket_t* ticket_name);
 
 void picoquic_free_tickets(picoquic_stored_ticket_t** pp_first_ticket);
 

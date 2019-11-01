@@ -20,6 +20,7 @@
 */
 
 #include "picoquic_internal.h"
+#include "picotls_settings.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -367,7 +368,7 @@ int picoquic_load_tickets(picoquic_stored_ticket_t** pp_first_ticket,
 #endif /* NO_FILESYSTEM */
 
 int picoquic_save_tickets_buffer(const picoquic_stored_ticket_t* first_ticket,
-    uint64_t current_time, q_stored_ticket_t* ticket_name)
+    uint64_t current_time, ptls_session_ticket_t* ticket_name)
 {
     int ret = 0;
     int all_record = 0;
@@ -400,7 +401,7 @@ int picoquic_save_tickets_buffer(const picoquic_stored_ticket_t* first_ticket,
 }
 
 int picoquic_load_tickets_buffer(picoquic_stored_ticket_t** pp_first_ticket,
-    uint64_t current_time, q_stored_ticket_t* ticket_name)
+    uint64_t current_time, ptls_session_ticket_t* ticket_name)
 {
     int ret = 0;
     picoquic_stored_ticket_t* previous = NULL;

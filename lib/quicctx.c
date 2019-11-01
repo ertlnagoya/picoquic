@@ -31,10 +31,8 @@
 #endif
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
+#include <t_syslog.h>
 #endif
-
-#include "picoquic.h"
-q_stored_ticket_t SESSION_TICKET;
 
 /*
 * Structures used in the hash table of connections
