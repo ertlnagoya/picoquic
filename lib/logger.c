@@ -27,10 +27,72 @@
 
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
+#include <t_syslog.h>
 #endif
 #include "fnv1a.h"
 #include "picoquic_internal.h"
 #include "tls_api.h"
+
+#ifdef DISABLE_DEBUG_PRINTF
+void picoquic_log_decrypted_segment(int log_cnxid, picoquic_cnx_t* cnx, int receiving, 
+        picoquic_packet_header * ph, uint8_t* bytes, size_t length, int ret)
+{
+    return;
+}
+
+void picoquic_log_outgoing_segment(void* F_log, int log_cnxid, picoquic_cnx_t* cnx, uint8_t * bytes,
+    uint64_t sequence_number, uint32_t length, uint8_t* send_buffer, uint32_t send_length)
+{
+    return;
+}
+
+void picoquic_log_packet_address(uint64_t log_cnxid64, picoquic_cnx_t* cnx,
+    struct sockaddr* addr_peer, int receiving, size_t length, uint64_t current_time)
+{
+    return;
+}
+
+void picoquic_log_prefix_initial_cid64(uint64_t log_cnxid64)
+{
+    return;
+}
+
+/* Handling of cc_log */
+void picoquic_open_cc_dump(picoquic_cnx_t * cnx)
+{
+    return;
+}
+
+void picoquic_close_cc_dump(picoquic_cnx_t * cnx)
+{
+    return;
+}
+void picoquic_cc_dump(picoquic_cnx_t * cnx, uint64_t current_time)
+{
+    return;
+}
+
+void picoquic_log_error_packet(uint8_t* bytes, size_t bytes_max, int ret)
+{
+    syslog(LOG_ERROR, "Packet length %d caused error: %d\n", (int)bytes_max, ret);
+}
+
+void picoquic_log_processing(picoquic_cnx_t* cnx, size_t length, int ret)
+{
+    return;
+}
+
+void picoquic_log_transport_extension(picoquic_cnx_t* cnx, int log_cnxid)
+{
+    return;
+}
+
+void picoquic_log_picotls_ticket(picoquic_connection_id_t cnx_id, uint8_t* ticket, uint16_t ticket_length)
+{
+    return;
+}
+
+#else /* DISABLE_DEBUG_PRINTF */
 
 void picoquic_log_bytes(uint8_t* bytes, size_t bytes_max)
 {
@@ -46,7 +108,7 @@ void picoquic_log_bytes(uint8_t* bytes, size_t bytes_max)
 
 void picoquic_log_error_packet(uint8_t* bytes, size_t bytes_max, int ret)
 {
-    DBG_PRINTF("Packet length %d caused error: %d\n", (int)bytes_max, ret);
+    syslog(LOG_NOTICE, "Packet length %d caused error: %d\n", (int)bytes_max, ret);
 
     picoquic_log_bytes(bytes, bytes_max);
 
@@ -537,14 +599,14 @@ size_t picoquic_log_ack_frame(uint64_t cnx_id64, uint8_t* bytes, size_t bytes_ma
         uint64_t block_to_block;
 
         if (byte_index >= bytes_max) {
-            DBG_PRINTF("    Malformed ACK RANGE, %d blocks remain.\n", (int)num_block);
+            syslog(LOG_ERROR, "    Malformed ACK RANGE, %d blocks remain.\n", (int)num_block);
             break;
         }
 
         size_t l_range = picoquic_varint_decode(bytes + byte_index, bytes_max - byte_index, &range);
         if (l_range == 0) {
             byte_index = bytes_max;
-            DBG_PRINTF("    Malformed ACK RANGE, requires %d bytes out of %d", (int)picoquic_varint_skip(bytes),
+            syslog(LOG_ERROR, "    Malformed ACK RANGE, requires %d bytes out of %d", (int)picoquic_varint_skip(bytes),
                 (int)(bytes_max - byte_index));
             break;
         } else {
@@ -558,7 +620,7 @@ size_t picoquic_log_ack_frame(uint64_t cnx_id64, uint8_t* bytes, size_t bytes_ma
             if (cnx_id64 != 0) {
                 DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
             }
-            DBG_PRINTF("    ack range error: largest=%lu%lu, range=%lu%lu",
+            syslog(LOG_ERROR, "    ack range error: largest=%lu%lu, range=%lu%lu",
                 (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range);
             byte_index = bytes_max;
             break;
@@ -580,7 +642,7 @@ size_t picoquic_log_ack_frame(uint64_t cnx_id64, uint8_t* bytes, size_t bytes_ma
             if (cnx_id64 != 0) {
                 DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
             }
-            DBG_PRINTF("    Malformed ACK GAP, %d blocks remain.", (int)num_block);
+            syslog(LOG_ERROR, "    Malformed ACK GAP, %d blocks remain.", (int)num_block);
             byte_index = bytes_max;
             break;
         } else {
@@ -591,7 +653,7 @@ size_t picoquic_log_ack_frame(uint64_t cnx_id64, uint8_t* bytes, size_t bytes_ma
                 if (cnx_id64 != 0) {
                     DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
                 }
-                DBG_PRINTF("    Malformed ACK GAP, requires %d bytes out of %d", (int)picoquic_varint_skip(bytes),
+                syslog(LOG_ERROR, "    Malformed ACK GAP, requires %d bytes out of %d", (int)picoquic_varint_skip(bytes),
                     (int)(bytes_max - byte_index));
                 break;
             } else {
@@ -606,7 +668,7 @@ size_t picoquic_log_ack_frame(uint64_t cnx_id64, uint8_t* bytes, size_t bytes_ma
             if (cnx_id64 != 0) {
                 DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
             }
-            DBG_PRINTF("    ack gap error: largest=%lu%lu, range=%lu%lu, gap=%lu%lu",
+            syslog(LOG_ERROR, "    ack gap error: largest=%lu%lu, range=%lu%lu, gap=%lu%lu",
                 (uint32_t)( largest >> 32), (uint32_t)largest, (uint32_t)( range >> 32), (uint32_t)range,
                 (uint32_t)( (block_to_block - range) >> 32), (uint32_t)(block_to_block - range));
             byte_index = bytes_max;
@@ -622,7 +684,7 @@ size_t picoquic_log_ack_frame(uint64_t cnx_id64, uint8_t* bytes, size_t bytes_ma
             size_t l_ecnx = picoquic_varint_decode(bytes + byte_index, bytes_max - byte_index, &ecnx3[ecnx]);
 
             if (l_ecnx == 0) {
-                DBG_PRINTF(", incorrect ECN encoding");
+                syslog(LOG_ERROR, ", incorrect ECN encoding");
                 byte_index = bytes_max;
                 break;
             }
@@ -660,7 +722,7 @@ size_t picoquic_log_reset_stream_frame(uint8_t* bytes, size_t bytes_max)
     }
 
     if (l1 == 0 || l2 == 0) {
-        DBG_PRINTF("    Malformed RESET STREAM, requires %d bytes out of %d\n", (int)(byte_index + ((l1 == 0) ? (picoquic_varint_skip(bytes + 1) + 3) : picoquic_varint_skip(bytes + byte_index))),
+        syslog(LOG_ERROR, "    Malformed RESET STREAM, requires %d bytes out of %d\n", (int)(byte_index + ((l1 == 0) ? (picoquic_varint_skip(bytes + 1) + 3) : picoquic_varint_skip(bytes + byte_index))),
             (int)bytes_max);
         byte_index = bytes_max;
     } else {
@@ -680,7 +742,7 @@ size_t picoquic_log_stop_sending_frame(uint8_t* bytes, size_t bytes_max)
     uint32_t error_code;
 
     if (min_size > bytes_max) {
-        DBG_PRINTF("    Malformed STOP SENDING, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed STOP SENDING, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
         return bytes_max;
     }
 
@@ -689,7 +751,7 @@ size_t picoquic_log_stop_sending_frame(uint8_t* bytes, size_t bytes_max)
     error_code = PICOPARSE_16(bytes + byte_index);
     byte_index += 2;
 
-    DBG_PRINTF("    STOP SENDING %d (0x%08x), Error 0x%x.\n",
+    syslog(LOG_ERROR, "    STOP SENDING %d (0x%08x), Error 0x%x.\n",
         (uint32_t)stream_id, (uint32_t)stream_id, error_code);
 
     return byte_index;
@@ -722,7 +784,7 @@ size_t picoquic_log_generic_close_frame(uint8_t* bytes, size_t bytes_max, uint8_
     }
 
     if (l1 == 0) {
-        DBG_PRINTF("    Malformed %s, requires %d bytes out of %d\n",
+        syslog(LOG_ERROR, "    Malformed %s, requires %d bytes out of %d\n",
             picoquic_log_frame_names(ftype), 
             (int)(byte_index + picoquic_varint_skip(bytes + 3)), (int)bytes_max);
         byte_index = bytes_max;
@@ -733,12 +795,12 @@ size_t picoquic_log_generic_close_frame(uint8_t* bytes, size_t bytes_max, uint8_
         DBG_PRINTF("    %s, Error 0x%04x, ", picoquic_log_frame_names(ftype), error_code);
         if (ftype == picoquic_frame_type_connection_close && 
             offending_frame_type != 0) {
-            DBG_PRINTF("Offending frame %lx%lx\n",
+            syslog(LOG_ERROR, "Offending frame %lx%lx\n",
                 (uint32_t)(offending_frame_type >> 32), (uint32_t)offending_frame_type);
         }
         DBG_PRINTF("Reason length %lu%lu\n", (uint32_t)(string_length >> 32), (uint32_t)string_length);
         if (byte_index + string_length > bytes_max) {
-            DBG_PRINTF("    Malformed %s, requires %lu%lu bytes out of %lu%lu\n",
+            syslog(LOG_ERROR, "    Malformed %s, requires %lu%lu bytes out of %lu%lu\n",
                 picoquic_log_frame_names(ftype), (uint32_t)((byte_index + string_length) >> 32),
                 (uint32_t)(byte_index + string_length), (uint32_t)(bytes_max >> 32), (uint32_t)bytes_max);
             byte_index = bytes_max;
@@ -793,7 +855,7 @@ size_t picoquic_log_max_data_frame(uint8_t* bytes, size_t bytes_max)
     size_t l1 = picoquic_varint_decode(bytes + 1, bytes_max - 1, &max_data);
 
     if (1 + l1 > bytes_max) {
-        DBG_PRINTF("    Malformed MAX DATA, requires %d bytes out of %d\n", (int)(1 + l1), (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed MAX DATA, requires %d bytes out of %d\n", (int)(1 + l1), (int)bytes_max);
         return bytes_max;
     } else {
         byte_index = 1 + l1;
@@ -814,7 +876,7 @@ size_t picoquic_log_max_stream_data_frame(uint8_t* bytes, size_t bytes_max)
     size_t l2 = picoquic_varint_decode(bytes + 1 + l1, bytes_max - 1 - l1, &max_data);
 
     if (l1 == 0 || l2 == 0) {
-        DBG_PRINTF("    Malformed MAX STREAM DATA, requires %d bytes out of %d\n",
+        syslog(LOG_ERROR, "    Malformed MAX STREAM DATA, requires %d bytes out of %d\n",
             (int)(1 + l1 + l2), (int)bytes_max);
         return bytes_max;
     } else {
@@ -834,7 +896,7 @@ size_t picoquic_log_max_stream_id_frame(uint8_t* bytes, size_t bytes_max, uint8_
     uint64_t rank;
 
     if (min_size > bytes_max) {
-        DBG_PRINTF("    Malformed %s, requires %d bytes out of %d\n", picoquic_log_frame_names(frame_id),
+        syslog(LOG_ERROR, "    Malformed %s, requires %d bytes out of %d\n", picoquic_log_frame_names(frame_id),
             (int)min_size, (int)bytes_max);
         return bytes_max;
     }
@@ -855,7 +917,7 @@ size_t picoquic_log_blocked_frame(uint8_t* bytes, size_t bytes_max)
     uint64_t blocked_offset = 0;
 
     if (min_size > bytes_max) {
-        DBG_PRINTF("    Malformed BLOCKED, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed BLOCKED, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
         return bytes_max;
     }
 
@@ -875,7 +937,7 @@ size_t picoquic_log_stream_blocked_frame(uint8_t* bytes, size_t bytes_max)
     uint64_t blocked_stream_id;
 
     if (min_size > bytes_max) {
-        DBG_PRINTF("    Malformed STREAM BLOCKED, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed STREAM BLOCKED, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
         return bytes_max;
     }
 
@@ -895,7 +957,7 @@ size_t picoquic_log_streams_blocked_frame(uint8_t* bytes, size_t bytes_max, uint
     uint64_t blocked_stream_rank;
 
     if (min_size > bytes_max) {
-        DBG_PRINTF("    Malformed %s frame, requires %d bytes out of %d\n", picoquic_log_frame_names(frame_id),
+        syslog(LOG_ERROR, "    Malformed %s frame, requires %d bytes out of %d\n", picoquic_log_frame_names(frame_id),
             (int)min_size, (int)bytes_max);
         byte_index =  bytes_max;
     }
@@ -927,7 +989,7 @@ size_t picoquic_log_new_connection_id_frame(uint8_t* bytes, size_t bytes_max)
     min_size += l_cid;
 
     if (l_seq == 0 || min_size > bytes_max) {
-        DBG_PRINTF("    Malformed NEW CONNECTION ID, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed NEW CONNECTION ID, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
         byte_index = bytes_max;
     }
     else {
@@ -960,7 +1022,7 @@ size_t picoquic_log_retire_connection_id_frame(uint8_t* bytes, size_t bytes_max)
     }
 
     if (l_seq == 0 || byte_index > bytes_max) {
-        DBG_PRINTF("    Malformed RETIRE CONNECTION ID, requires %d bytes out of %d\n", (int)(byte_index + ((l_seq == 0)?1:0)), (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed RETIRE CONNECTION ID, requires %d bytes out of %d\n", (int)(byte_index + ((l_seq == 0)?1:0)), (int)bytes_max);
         byte_index = bytes_max;
     }
     else {
@@ -982,7 +1044,7 @@ size_t picoquic_log_new_token_frame(uint8_t* bytes, size_t bytes_max)
     min_size += l_toklen + (size_t)toklen;
 
     if (l_toklen == 0 || min_size > bytes_max) {
-        DBG_PRINTF("    Malformed NEW CONNECTION ID, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
+        syslog(LOG_ERROR, "    Malformed NEW CONNECTION ID, requires %d bytes out of %d\n", (int)min_size, (int)bytes_max);
         return bytes_max;
     } else {
         byte_index += l_toklen;
@@ -1007,7 +1069,7 @@ size_t picoquic_log_path_frame(uint8_t* bytes, size_t bytes_max)
     size_t challenge_length = 8;
 
     if (byte_index + challenge_length > bytes_max) {
-        DBG_PRINTF("    Malformed %s frame, %d bytes needed, %d available\n",
+        syslog(LOG_ERROR, "    Malformed %s frame, %d bytes needed, %d available\n",
             picoquic_log_frame_names(bytes[0]),
             (int)(challenge_length + 1), (int)bytes_max);
         byte_index = bytes_max;
@@ -1046,7 +1108,7 @@ size_t picoquic_log_crypto_hs_frame(uint8_t* bytes, size_t bytes_max)
     }
 
     if (l_off == 0 || l_len == 0 || byte_index + data_length > bytes_max) {
-        DBG_PRINTF("    Malformed Crypto HS frame.\n");
+        syslog(LOG_ERROR, "    Malformed Crypto HS frame.\n");
         byte_index = bytes_max;
     } else {
         DBG_PRINTF("    Crypto HS frame, offset %lu%lu, length %d",
@@ -1164,7 +1226,7 @@ void picoquic_log_frames(uint64_t cnx_id64, uint8_t* bytes, size_t length)
             /* Not implemented yet! */
             uint64_t frame_id64;
             if (picoquic_varint_decode(bytes, length - byte_index, &frame_id64) > 0) {
-                DBG_PRINTF("    Unknown frame, type: %lu\n", (uint32_t)( frame_id64 >> 32), (uint32_t)frame_id64);
+                DBG_PRINTF("    Unknown frame, type: %lx\n", frame_id);
             } else {
                 DBG_PRINTF("    Truncated frame type\n");
             }
@@ -1208,7 +1270,7 @@ void picoquic_log_decrypted_segment(int log_cnxid, picoquic_cnx_t* cnx,
             DBG_PRINTF("   Stateless reset.\n");
         }
         else {
-            DBG_PRINTF("   Header or encryption error: %x.\n", ret);
+            syslog(LOG_ERROR, "   Header or encryption error: %x.\n", ret);
         }
     }
     else if (ph->ptype == picoquic_packet_version_negotiation) {
@@ -1292,7 +1354,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                 if (log_cnxid != 0) {
                     DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
                 }
-                DBG_PRINTF("Malformed client extension, length %d < 4 bytes.\n", (int)(bytes_max - byte_index));
+                syslog(LOG_ERROR, "Malformed client extension, length %d < 4 bytes.\n", (int)(bytes_max - byte_index));
                 ret = -1;
             }
             else {
@@ -1311,7 +1373,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                 DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
             }
             if (bytes_max < byte_index + 5) {
-                DBG_PRINTF("Malformed server extension, length %d < 5 bytes.\n", (int)(bytes_max - byte_index));
+                syslog(LOG_ERROR, "Malformed server extension, length %d < 5 bytes.\n", (int)(bytes_max - byte_index));
                 ret = -1;
             } else {
                 uint32_t version;
@@ -1327,7 +1389,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                     if (log_cnxid != 0) {
                         DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
                     }
-                    DBG_PRINTF("Malformed extension, supported version size = %d, not multiple of 4.\n",
+                    syslog(LOG_ERROR, "Malformed extension, supported version size = %d, not multiple of 4.\n",
                         (uint32_t)supported_versions_size);
                     ret = -1;
 
@@ -1335,7 +1397,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                     if (log_cnxid != 0) {
                         DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
                     }
-                    DBG_PRINTF("    Malformed extension, supported version size = %d, max %d or 252\n",
+                    syslog(LOG_ERROR, "    Malformed extension, supported version size = %d, max %d or 252\n",
                         (uint32_t)supported_versions_size, (int)(bytes_max - byte_index));
                     ret = -1;
                 } else {
@@ -1379,7 +1441,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                 if (log_cnxid != 0) {
                     DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
                 }
-                DBG_PRINTF("    Malformed extension list, only %d byte avaliable.\n", (int)(bytes_max - byte_index));
+                syslog(LOG_ERROR, "    Malformed extension list, only %d byte avaliable.\n", (int)(bytes_max - byte_index));
                 ret = -1;
             }
             else {
@@ -1406,7 +1468,7 @@ void picoquic_log_transport_extension_content(int log_cnxid, uint64_t cnx_id64,
                             if (log_cnxid != 0) {
                                 DBG_PRINTF("%lx%lx:", (uint32_t)( cnx_id64 >> 32), (uint32_t)cnx_id64);
                             }
-                            DBG_PRINTF("        Malformed extension -- only %d bytes avaliable for type and length.\n",
+                            syslog(LOG_ERROR, "        Malformed extension -- only %d bytes avaliable for type and length.\n",
                                 (int)(extensions_end - byte_index));
                             ret = -1;
                         }
@@ -1604,7 +1666,7 @@ static void picoquic_log_tls_ticket(picoquic_connection_id_t cnx_id,
 
     if (ret == -1) {
         picoquic_log_prefix_initial_cid64(cnx_id64);
-        DBG_PRINTF("Malformed ticket, length = %d, at least %d required.\n", ticket_length, min_length);
+        syslog(LOG_ERROR, "Malformed ticket, length = %d, at least %d required.\n", ticket_length, min_length);
     }
     picoquic_log_prefix_initial_cid64(cnx_id64);
     DBG_PRINTF("lifetime = %d, age_add = %x, %d nonce, %d ticket, %d extensions.\n",
@@ -1631,7 +1693,7 @@ static void picoquic_log_tls_ticket(picoquic_connection_id_t cnx_id,
             if (x_index > extension_length) {
                 DBG_PRINTF("\n");
                 picoquic_log_prefix_initial_cid64(cnx_id64);
-                DBG_PRINTF("malformed extensions, require %d bytes, not just %d", x_index, extension_length);
+                syslog(LOG_ERROR, "malformed extensions, require %d bytes, not just %d", x_index, extension_length);
             }
         }
 
@@ -1645,7 +1707,7 @@ static void picoquic_log_tls_ticket(picoquic_connection_id_t cnx_id,
 
     if (ret == -2) {
         picoquic_log_prefix_initial_cid64(cnx_id64);
-        DBG_PRINTF("Malformed TLS ticket, %d extra bytes.\n", ticket_length - min_length);
+        syslog(LOG_ERROR, "Malformed TLS ticket, %d extra bytes.\n", ticket_length - min_length);
     }
 }
 
@@ -1713,7 +1775,7 @@ void picoquic_log_picotls_ticket(picoquic_connection_id_t cnx_id, uint8_t* ticke
 
     if (ret == -1) {
         picoquic_log_prefix_initial_cid64(cnx_id64);
-        DBG_PRINTF("Malformed PTLS ticket, length = %d, at least %d required.\n", 
+        syslog(LOG_ERROR, "Malformed PTLS ticket, length = %d, at least %d required.\n", 
             ticket_length, min_length);
     } else {
         if (tls_ticket_length > 0 && tls_ticket_ptr != NULL) {
@@ -1723,7 +1785,7 @@ void picoquic_log_picotls_ticket(picoquic_connection_id_t cnx_id, uint8_t* ticke
 
     if (ret == -2) {
         picoquic_log_prefix_initial_cid64(cnx_id64);
-        DBG_PRINTF("Malformed PTLS ticket, %d extra bytes.\n", ticket_length - min_length);
+        syslog(LOG_ERROR, "Malformed PTLS ticket, %d extra bytes.\n", ticket_length - min_length);
     }
 }
 
@@ -1774,7 +1836,7 @@ void picoquic_open_cc_dump(picoquic_cnx_t * cnx)
             }
 
             if (ret != 0) {
-                DBG_PRINTF("Cannot format file name into folder %s, id_len = %d\n", cnx->quic->cc_log_dir, cnx->initial_cnxid.id_len);
+                syslog(LOG_NOTICE, "Cannot format file name into folder %s, id_len = %d\n", cnx->quic->cc_log_dir, cnx->initial_cnxid.id_len);
             }
         }
 
@@ -1792,7 +1854,7 @@ void picoquic_open_cc_dump(picoquic_cnx_t * cnx)
             }
 #endif
             if (ret != 0) {
-                DBG_PRINTF("Cannot open file %s for write.\n", cc_log_file_name);
+                syslog(LOG_NOTICE, "Cannot open file %s for write.\n", cc_log_file_name);
             } else {
                 /* TODO: maintain the list of headers as debugging data is added */
                 ret |= fprintf(cnx->cc_log, "time, ") <= 0;
@@ -1814,7 +1876,7 @@ void picoquic_open_cc_dump(picoquic_cnx_t * cnx)
                 ret |= fprintf(cnx->cc_log, "\n") <= 0;
 
                 if (ret != 0) {
-                    DBG_PRINTF("Cannot write header for file %s.\n", cc_log_file_name);
+                    syslog(LOG_NOTICE, "Cannot write header for file %s.\n", cc_log_file_name);
                     picoquic_close_cc_dump(cnx);
                 }
             }
@@ -1869,3 +1931,4 @@ void picoquic_cc_dump(picoquic_cnx_t * cnx, uint64_t current_time)
         picoquic_close_cc_dump(cnx);
     }
 }
+#endif
