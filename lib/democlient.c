@@ -160,20 +160,23 @@ static int picoquic_demo_client_open_stream(picoquic_cnx_t* cnx,
         ctx->first_stream = stream_ctx;
         stream_ctx->stream_id = stream_id;
 
+#ifndef NO_FILESYSTEM
 #ifdef _WINDOWS
         if (fopen_s(&stream_ctx->F, fname, (is_binary == 0) ? "w" : "wb") != 0) {
             ret = -1;
         }
 #else
-        // stream_ctx->F = fopen(fname, (is_binary == 0) ? "w" : "wb");
-        // if (stream_ctx->F == NULL) {
-        //     ret = -1;
-        // }
-        DBG_PRINTF("No FILE System\n");
+        stream_ctx->F = fopen(fname, (is_binary == 0) ? "w" : "wb");
+        if (stream_ctx->F == NULL) {
+            ret = -1;
+        }
 #endif
         if (ret != 0) {
             DBG_PRINTF("Cannot create file: %s\n", fname);
         }
+#else 
+        DBG_PRINTF("No FILE System\n");
+#endif /* NO_FILESYTEM */
     }
 
     if (ret == 0) {
@@ -334,7 +337,7 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
         DBG_PRINTF("Received a stateless reset.\n");
         break;
     case picoquic_callback_close: /* Received connection close */
-        DBG_PRINTF("Received a request to close the connection.\n");
+        syslog(LOG_INFO, "Received a request to close the connection.\n");
         break;
     case picoquic_callback_application_close: /* Received application close */
         DBG_PRINTF("Received a request to close the application.\n");

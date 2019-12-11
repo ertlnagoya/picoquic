@@ -984,10 +984,9 @@ void picoquic_crypto_context_free(picoquic_crypto_context_t * ctx)
 
 /* Definition of supported key exchange algorithms */
 
-ptls_key_exchange_algorithm_t *picoquic_key_exchanges[] = { &ptls_wolfcrypt_secp256r1, &ptls_wolfcrypt_x25519, NULL };
+ptls_key_exchange_algorithm_t *picoquic_key_exchanges[] = { &ptls_wolfcrypt_x25519, &ptls_wolfcrypt_secp256r1, NULL };
 ptls_cipher_suite_t *picoquic_cipher_suites[] = { 
-    &ptls_wolfcrypt_aes256gcmsha384, &ptls_wolfcrypt_aes128gcmsha256,
-    &ptls_minicrypto_chacha20poly1305sha256, NULL };
+    &ptls_wolfcrypt_aes128gcmsha256, &ptls_wolfcrypt_aes256gcmsha384, NULL };
 
 /*
  * Setting the master TLS context.
@@ -1014,7 +1013,7 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
         ret = -1;
     } else {
         memset(ctx, 0, sizeof(ptls_context_t));
-        ctx->random_bytes = ptls_openssl_random_bytes; //ptls_minicrypto_random_bytes;
+        ctx->random_bytes = ptls_wolfcrypt_random_bytes; //ptls_minicrypto_random_bytes;
         ctx->key_exchanges = picoquic_key_exchanges; /* was:  ptls_minicrypto_key_exchanges; */
         ctx->cipher_suites = picoquic_cipher_suites; /* was: ptls_minicrypto_cipher_suites; */
 
@@ -1094,7 +1093,6 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
             if (cert_root_file_name != NULL)
             {
                 store = X509_STORE_new();
-#ifdef NO_FILESYSTEM
                 if (SSL_CA_ECC_PEM){
                     if (store != NULL){
                         X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
@@ -1113,8 +1111,8 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
                         }
                         X509_free(x509);
                     }
+#ifndef NO_FILESYSTEM
                 } else 
-#endif
                 if (store != NULL) {
                     int file_ret = 0;
                     X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
@@ -1122,6 +1120,7 @@ int picoquic_master_tlscontext(picoquic_quic_t* quic,
                         DBG_PRINTF("Cannot load X509 store (%s), ret = %d\n",
                             cert_root_file_name, ret);
                     }
+#endif
                 }
             }
 
