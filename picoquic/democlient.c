@@ -301,6 +301,7 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
                 case picoquic_alpn_http_0_9:
                 default:
                     ret = (fwrite(bytes, 1, length, stream_ctx->F) > 0) ? 0 : -1;
+                    printf("receiving data = %s\n", bytes);
                     stream_ctx->received_length += length;
                     break;
                 }

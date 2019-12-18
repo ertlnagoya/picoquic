@@ -114,7 +114,7 @@ void print_address(struct sockaddr* address, char* label, picoquic_connection_id
         (address->sa_family == AF_INET) ? (void*)&(((struct sockaddr_in*)address)->sin_addr) : (void*)&(((struct sockaddr_in6*)address)->sin6_addr),
         hostname, sizeof(hostname));
 
-    printf("%016llx : ", (unsigned long long)picoquic_val64_connection_id(cnx_id));
+    printf("%016llx: ", (unsigned long long)picoquic_val64_connection_id(cnx_id));
 
     if (x != NULL) {
         printf("%s %s, port %d\n", label, x,
@@ -179,7 +179,7 @@ int quic_server(const char* server_name, int server_port,
     socklen_t from_length;
     socklen_t to_length;
     uint8_t buffer[1536];
-    uint8_t send_buffer[1536];
+    uint8_t send_buffer[1252];
     size_t send_length = 0;
     int bytes_recv;
     uint64_t current_time = 0;
@@ -501,7 +501,7 @@ int quic_client(const char* ip_address_text, int server_port, const char * sni,
     socklen_t to_length;
     int server_addr_length = 0;
     uint8_t buffer[1536];
-    uint8_t send_buffer[1536];
+    uint8_t send_buffer[1252];
     size_t send_length = 0;
     uint64_t key_update_done = 0;
     int bytes_recv;
