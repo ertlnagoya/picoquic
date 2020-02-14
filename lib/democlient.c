@@ -302,8 +302,6 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
                 }
                 case picoquic_alpn_http_0_9:
                 default:
-                    //ret = (fwrite(bytes, 1, length, stream_ctx->F) > 0) ? 0 : -1;
-                    syslog(LOG_NOTICE, "%s\n", bytes);
                     stream_ctx->received_length += length;
                     break;
                 }
@@ -314,8 +312,7 @@ int picoquic_demo_client_callback(picoquic_cnx_t* cnx,
                 stream_ctx->F = NULL;
                 ctx->nb_open_streams--;
                 fin_stream_id = stream_id;
-                syslog_flush();
-                syslog(LOG_NOTICE, "Stream %d ended after %d bytes\n",
+                DBG_PRINTF("Stream %d ended after %d bytes\n",
                     (int)stream_id, (int)stream_ctx->received_length);
             }
         }
