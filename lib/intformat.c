@@ -21,9 +21,6 @@
 
 #include "userq_settings.h"
 #include <stdint.h>
-#ifdef USE_LWIP
-#include "lwip/sockets.h"
-#endif
 #ifndef WIN32
 #include <sys/types.h>
 #endif

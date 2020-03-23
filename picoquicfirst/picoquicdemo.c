@@ -77,7 +77,6 @@
 #include <netinet/in.h>
 #include <sys/select.h>
 #else
-#include "lwip/netdb.h"
 #include "lwip/tcpip.h"
 #include "lwip.h"
 #endif

@@ -76,9 +76,6 @@
 
 #ifdef USE_LWIP
 #include "lwip/sockets.h"
-#include "lwip/errno.h"
-#include "lwip/netdb.h"
-#include "lwip/def.h"
 #endif
 
 #ifndef SOCKET_TYPE

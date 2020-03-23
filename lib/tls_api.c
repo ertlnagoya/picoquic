@@ -26,7 +26,6 @@
 #include <stddef.h>
 #include "picotls.h"
 #include "picoquic_internal.h"
-#include "picotls/openssl.h"
 #include "picotls/minicrypto.h"
 #include "picotls/wolfcrypt.h"
 #include "picotls/ffx.h"
